@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+<!-- ====================================================================== 
+     Black Rook Gloop-OpenAL Build File    
+     Matt Tropiano                                                                
+     ====================================================================== -->
+<project name="build" default="jar">
+
+	<description>Black Rook Gloop-OpenAL</description>
+
+	<property file="build.properties" />
+
+	<!-- Dependencies -->
+	<property name="dev.base" value=".." />
+	<property name="S" value="${path.separator}" />
+
+	<!-- Project Libs -->
+	<property name="lwjgl.lib.version" value="3.2.3" />
+	<property name="lwjgl.jar" value="lwjgl-${lwjgl.lib.version}.jar" />
+	<property name="lwjgl.openal.jar" value="lwjgl-openal-${lwjgl.lib.version}.jar" />
+
+	<!-- Project Info -->
+	<property name="project.archive" value="blackrook-gloop-openal" />
+	<property name="project.javadoc.title" value="Black Rook Gloop-OpenAL" />
+	<property name="project.classpath" value="${dev.base}/${lwjgl.jar}${S}${dev.base}/${lwjgl.openal.jar}"/>
+	<property name="project.compiler.bootclasspath" value="" />
+	<property name="project.testclass" value=""/>
+	<property name="project.testclass.main" value=""/>
+	<property name="project.javadoc.packages" value="
+		"
+	/>
+	
+	<import file="build-dependencies.xml" />
+	<import file="build-import.xml" />
+
+	<target name="dependency.lwjgl">
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" extension="-natives-windows" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" extension="-natives-windows-x86" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" extension="-natives-macos" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" extension="-natives-linux" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" extension="-natives-linux-arm32" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" extension="-natives-linux-arm64" />
+		<maven-jar-sources-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" />
+		<maven-jar-javadoc-dl group-path="org/lwjgl" artifact="lwjgl" version="${lwjgl.lib.version}" />
+	</target>
+
+	<target name="dependency.lwjgl.openal">
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" extension="-natives-windows" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" extension="-natives-windows-x86" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" extension="-natives-macos" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" extension="-natives-linux" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" extension="-natives-linux-arm32" />
+		<maven-jar-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" extension="-natives-linux-arm64" />
+		<maven-jar-sources-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" />
+		<maven-jar-javadoc-dl group-path="org/lwjgl" artifact="lwjgl-openal" version="${lwjgl.lib.version}" />
+	</target>
+
+	<target name="dependencies" depends="init.dependencies, dependency.lwjgl, dependency.lwjgl.openal, dependency.properties" description="Downloads and compiles the dependencies.">
+	</target>
+		
+	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
+        <javadoc access="protected" 
+        	additionalparam="-J-Xmx512m  " author="true" 
+        	classpath="${bin.dir}" 
+        	doctitle="${project.javadoc.title}" 
+        	sourcepath="${src.dir}" 
+        	packagenames="${project.javadoc.packages}"
+        	destdir="${docs.dir}" 
+        	splitindex="true" 
+        	use="true" 
+        	version="true" 
+        	nodeprecated="false" 
+        	nodeprecatedlist="false" 
+        	noindex="false" 
+        	nonavbar="false" 
+        	notree="false"
+    		>
+            <link href="https://docs.oracle.com/en/java/javase/11/docs/api/"/>
+        </javadoc>
+    </target>	
+
+</project>
