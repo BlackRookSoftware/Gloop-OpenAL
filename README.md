@@ -14,7 +14,10 @@ Copyright (c) 2020 Black Rook Software.
 
 ### Required Java Modules
 
-[java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
+[java.desktop](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/module-summary.html)  
+* [java.xml](https://docs.oracle.com/en/java/javase/11/docs/api/java.xml/module-summary.html)  
+* [java.datatransfer](https://docs.oracle.com/en/java/javase/11/docs/api/java.datatransfer/module-summary.html)  
+* [java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
 
 ### Introduction
 
