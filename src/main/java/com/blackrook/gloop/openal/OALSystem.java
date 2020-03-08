@@ -13,14 +13,27 @@ import java.util.Set;
 
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL11;
-import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALC11;
-import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.effect.AutowahEffect;
+import com.blackrook.gloop.openal.effect.ChorusEffect;
+import com.blackrook.gloop.openal.effect.CompressorEffect;
+import com.blackrook.gloop.openal.effect.DistortionEffect;
+import com.blackrook.gloop.openal.effect.EchoEffect;
+import com.blackrook.gloop.openal.effect.EqualizerEffect;
+import com.blackrook.gloop.openal.effect.FlangerEffect;
+import com.blackrook.gloop.openal.effect.FrequencyShiftEffect;
+import com.blackrook.gloop.openal.effect.PitchShiftEffect;
+import com.blackrook.gloop.openal.effect.ReverbEffect;
+import com.blackrook.gloop.openal.effect.RingModulatorEffect;
+import com.blackrook.gloop.openal.effect.VocalMorpherEffect;
 import com.blackrook.gloop.openal.enums.DistanceModel;
 import com.blackrook.gloop.openal.exception.SoundException;
 import com.blackrook.gloop.openal.exception.SoundSystemException;
+import com.blackrook.gloop.openal.filter.BandPassFilter;
+import com.blackrook.gloop.openal.filter.HighPassFilter;
+import com.blackrook.gloop.openal.filter.LowPassFilter;
 
 /**
  * This class is a central sound system class designed to manage an OpenAL instance and environment.
@@ -485,7 +498,7 @@ public final class OALSystem
 	}
 
 	/**
-	 * Returns the sound environment's Doppler Factor.
+	 * @return the sound environment's Doppler Factor.
 	 */
 	public float getDopplerFactor()
 	{
@@ -503,11 +516,12 @@ public final class OALSystem
 	}
 
 	/**
-	 * Returns the sound environment's speed of sound factor.
+	 * @return the sound environment's speed of sound factor.
 	 */
 	public float getSpeedOfSound()
 	{
-		return AL11.alGetFloat(AL11.AL_DOPPLER_VELOCITY);
+		// AL_DOPPLER_VELOCITY - for some reason, not defined in AL11
+		return AL11.alGetFloat(0xC001);
 	}
 	
 	/**
