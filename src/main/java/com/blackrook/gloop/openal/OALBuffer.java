@@ -16,9 +16,10 @@ import javax.sound.sampled.AudioFormat;
 
 import org.lwjgl.openal.AL11;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import com.blackrook.gloop.openal.JSPISoundHandle.Decoder;
-import com.blackrook.gloop.openal.enums.SoundFormat;
+import com.blackrook.gloop.openal.exception.SoundException;
 import com.blackrook.gloop.openal.struct.IOUtils;
 
 /**
@@ -27,18 +28,45 @@ import com.blackrook.gloop.openal.struct.IOUtils;
  */
 public final class OALBuffer extends OALObject
 {
-	public static final int FREQ_8KHZ =	8000;
-	public static final int FREQ_11KHZ = 11025;
-	public static final int FREQ_16KHZ = 16000;
-	public static final int FREQ_22KHZ = 22050;
-	public static final int FREQ_32KHZ = 32000;
-	public static final int FREQ_44KHZ = 44100;
-	public static final int FREQ_48KHZ = 48000;
+	public static final int SAMPLING_RATE_8KHZ =  8000;
+	public static final int SAMPLING_RATE_11KHZ = 11025;
+	public static final int SAMPLING_RATE_16KHZ = 16000;
+	public static final int SAMPLING_RATE_22KHZ = 22050;
+	public static final int SAMPLING_RATE_32KHZ = 32000;
+	public static final int SAMPLING_RATE_44KHZ = 44100;
+	public static final int SAMPLING_RATE_48KHZ = 48000;
 	
+	/**
+	 * Sound format enumeration.
+	 */
+	public enum Format
+	{
+		MONO8(AL11.AL_FORMAT_MONO8, 8, 1),
+		MONO16(AL11.AL_FORMAT_MONO16, 16, 1),
+		STEREO8(AL11.AL_FORMAT_STEREO8, 8, 2),
+		STEREO16(AL11.AL_FORMAT_STEREO16, 16, 2),
+		;
+		
+		public final int alVal;
+		/** Sample resolution. */
+		public final int bits;
+		/** Number of channels. */
+		public final int channels;
+		
+		private Format(int val, int bits, int channels) 
+		{alVal = val; this.bits = bits; this.channels = channels;}
+
+		@Override
+		public String toString()
+		{
+			return bits + "-bit, " + channels + " ch.";
+		}
+	}
+
 	/** The sizes of each of the buffers. */
 	protected int bufferSize;
 	/** Sound format. */
-	protected SoundFormat bufferFormat;
+	protected Format bufferFormat;
 	/** Sound sampling rate. */
 	protected int bufferRate;
 
@@ -51,8 +79,8 @@ public final class OALBuffer extends OALObject
 	{
 		super(system);
 		this.bufferSize = 0;
-		this.bufferFormat = SoundFormat.MONO8;
-		this.bufferRate = FREQ_11KHZ;
+		this.bufferFormat = Format.MONO8;
+		this.bufferRate = SAMPLING_RATE_11KHZ;
 	}
 
 	/**
@@ -83,14 +111,11 @@ public final class OALBuffer extends OALObject
 	{
 		setFrequencyAndFormat(decoder.getDecodedAudioFormat());
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		byte[] by = new byte[16384];
-		int l = 0;
-		do {
-			l = decoder.readPCMBytes(by);
-			bos.write(by, 0, l);
-		} while (l == by.length);
-
-		loadPCMData(ByteBuffer.wrap(bos.toByteArray()));
+		byte[] by = new byte[16384]; // TODO: Maybe move to ThreadLocal?
+		int amt;
+		while ((amt = decoder.readPCMData(by, 0)) >= 0)
+			bos.write(by, 0, amt);
+		setData(bos.toByteArray());
 	}
 	
 	/**
@@ -108,7 +133,7 @@ public final class OALBuffer extends OALObject
 	{
 		int out;
 		clearError();
-		try (MemoryStack stack = MemoryStack.stackGet())
+		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
 			AL11.alGenBuffers(buf);
@@ -126,25 +151,57 @@ public final class OALBuffer extends OALObject
 	}
 
 	/**
-	 * Loads this buffer with PCM bytes.
-	 * @param pcmData the PCM data to load into it.
-	 * @param len amount of bytes to load.
+	 * Loads this buffer with sample data from an array of bytes.
+	 * This is intended for pure convenience, and its use is discouraged if performance is desired.
+	 * @param data the data to load into it.
 	 */
-	public synchronized void loadPCMData(ByteBuffer pcmData, int len)
+	public synchronized void setData(byte[] data)
 	{
-		bufferSize = len;
-		clearError();
-		AL11.alBufferData(getALId(), bufferFormat.alVal, pcmData, bufferRate);
-		errorCheck();
+		setData(data, 0, data.length);
+	}
+	
+	/**
+	 * Loads this buffer with sample data from an array of bytes.
+	 * This is intended for pure convenience, and its use is discouraged if performance is desired.
+	 * @param data the data to load into it.
+	 * @param offset the offset into the array to use.
+	 * @param length the amount of bytes to load.
+	 * @throws ArrayIndexOutOfBoundsException if <code>offset + length</code> exceeds <code>data.length</code>.
+	 */
+	public synchronized void setData(byte[] data, int offset, int length)
+	{
+		ByteBuffer buf = null;
+		try
+		{
+			buf = MemoryUtil.memAlloc(length);
+			buf.put(data, offset, length);
+			buf.flip();
+			setData(buf);
+		}
+		finally 
+		{
+			MemoryUtil.memFree(buf);
+		}
 	}
 
 	/**
-	 * Loads this buffer with PCM bytes.
-	 * @param pcmData the array of PCM bytes to load into it.
+	 * Loads this buffer with sample data.
+	 * The data is loaded from the source byte buffer's current position to its current limit.
+	 * @param data the data to load into it.
 	 */
-	public synchronized void loadPCMData(ByteBuffer pcmData)
+	public synchronized void setData(ByteBuffer data)
 	{
-		loadPCMData(pcmData, pcmData.capacity());
+		int len = data.remaining();
+		
+		// slightly more courteous error message for a specific condition.
+		int width = (bufferFormat.bits >> 3) * bufferFormat.channels;
+		if (len % width != 0)
+			throw new SoundException("Input data is not aligned to sample size - len: " + len + " width: " + width);
+
+		clearError();
+		AL11.alBufferData(getALId(), bufferFormat.alVal, data, bufferRate);
+		errorCheck();
+		bufferSize = len;
 	}
 
 	/** 
@@ -160,7 +217,7 @@ public final class OALBuffer extends OALObject
 	 * @param format This buffer's format.
 	 * @throws IllegalArgumentException if this is not set using a valid constant.
 	 */
-	public void setFormat(SoundFormat format)
+	public void setFormat(Format format)
 	{
 		bufferFormat = format;
 	}
@@ -168,24 +225,24 @@ public final class OALBuffer extends OALObject
 	/**
 	 * @return this buffer's format (AL constant).
 	 */
-	public SoundFormat getFormat()
+	public Format getFormat()
 	{
 		return bufferFormat;
 	}
 	
 	/**
-	 * Sets this buffer's frequency.
-	 * @param freq the frequency in kHz.
+	 * Sets this buffer's sampling rate.
+	 * @param rate the rate in kHz.
 	 */
-	public void setSamplingRate(int freq)
+	public void setSamplingRate(int rate)
 	{
-		bufferRate = freq;
+		bufferRate = rate;
 	}
 	
 	/**
-	 * @return this buffer's frequency.
+	 * @return this buffer's sampling rate.
 	 */
-	public int getFrequency()
+	public int getSamplingRate()
 	{
 		return bufferRate;
 	}
@@ -204,10 +261,10 @@ public final class OALBuffer extends OALObject
 				switch (bits)
 				{
 					case 8:
-						setFormat(SoundFormat.MONO8);
+						setFormat(Format.MONO8);
 						return;
 					case 16:
-						setFormat(SoundFormat.MONO16);
+						setFormat(Format.MONO16);
 						return;
 				}
 				break;
@@ -216,10 +273,10 @@ public final class OALBuffer extends OALObject
 				switch (bits)
 				{
 					case 8:
-						setFormat(SoundFormat.STEREO8);
+						setFormat(Format.STEREO8);
 						return;
 					case 16:
-						setFormat(SoundFormat.STEREO16);
+						setFormat(Format.STEREO16);
 						return;
 				}
 				break;
@@ -249,7 +306,7 @@ public final class OALBuffer extends OALObject
 				break;
 		}
 		sb.append(' ');
-		sb.append(getFrequency()+"Hz ");
+		sb.append(getSamplingRate()+"Hz ");
 		sb.append(getSize()+" bytes");
 		return sb.toString();
 	}

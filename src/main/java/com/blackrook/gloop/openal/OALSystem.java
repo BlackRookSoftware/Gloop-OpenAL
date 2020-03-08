@@ -16,6 +16,7 @@ import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC11;
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext.DistanceModel;
 import com.blackrook.gloop.openal.effect.AutowahEffect;
 import com.blackrook.gloop.openal.effect.ChorusEffect;
 import com.blackrook.gloop.openal.effect.CompressorEffect;
@@ -28,7 +29,6 @@ import com.blackrook.gloop.openal.effect.PitchShiftEffect;
 import com.blackrook.gloop.openal.effect.ReverbEffect;
 import com.blackrook.gloop.openal.effect.RingModulatorEffect;
 import com.blackrook.gloop.openal.effect.VocalMorpherEffect;
-import com.blackrook.gloop.openal.enums.DistanceModel;
 import com.blackrook.gloop.openal.exception.SoundException;
 import com.blackrook.gloop.openal.exception.SoundSystemException;
 import com.blackrook.gloop.openal.filter.BandPassFilter;
@@ -83,12 +83,11 @@ public final class OALSystem
 		alcContext = createContext(alcDevice);
 		if (!ALC11.alcMakeContextCurrent(alcContext.getHandle()))
 			throw new SoundSystemException("The context for " + dname + " couldn't be made current.");
-		getError();
 		
 		AL.createCapabilities(alcDevice.getCapabilities());
 		getError();
 		
-		maxEffectSlots = AL11.alGetInteger(EXTEfx.ALC_MAX_AUXILIARY_SENDS);
+		maxEffectSlots = ALC11.alcGetInteger(alcDevice.getHandle(), EXTEfx.ALC_MAX_AUXILIARY_SENDS);
 		getError();
 		
 		listener = new OALListener();
@@ -549,20 +548,37 @@ public final class OALSystem
 	 */
 	public void shutDown()
 	{
+		// suspend context before we delete. 
+		suspendCurrentContext();
 		getContextError();
-		ALC11.alcMakeContextCurrent(0);
+
+		// TODO: Gather and sort by object type - some objects need to be deleted before others.
+		synchronized (createdObjects)
+		{
+			// need to copy set contents - deleting these objects will affect the set as we iterate.
+			OALObject[] toDelete = new OALObject[createdObjects.size()];
+			createdObjects.toArray(toDelete);
+			createdObjects.clear();
+			for (int i = 0; i < toDelete.length; i++)
+				toDelete[i].destroy();
+		}			
+
+		ALC11.alcMakeContextCurrent(0L);
 		getContextError();
-		alcContext = null;
-		ALC11.alcCloseDevice(alcDevice.getHandle());
-		getContextError();
-		alcDevice = null;
 		
-		for (OALObject object : createdObjects)
-			object.destroy();
-		createdObjects.clear();
-		for (OALHandle object : createdHandles)
-			object.destroy();
-		createdHandles.clear();
+		alcContext = null;
+		alcDevice = null;
+
+		// TODO: Gather and sort by object type - some handles need to be deleted before others.
+		synchronized (createdHandles)
+		{
+			// need to copy set contents - deleting these handles will affect the set as we iterate.
+			OALHandle[] toDelete = new OALHandle[createdHandles.size()];
+			createdHandles.toArray(toDelete);
+			createdHandles.clear();
+			for (int i = 0; i < toDelete.length; i++)
+				toDelete[i].destroy();
+		}			
 	}
 
 	@Override

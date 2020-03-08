@@ -132,7 +132,7 @@ public class ReverbEffect extends OALEffect
 
 	/** 
 	 * Set reverb density factor (0.0 to 1.0). 
-	 * @param density 
+	 * @param density the new value.
 	 */
 	public final void setDensity(float density)
 	{

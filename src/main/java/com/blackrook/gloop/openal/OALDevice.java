@@ -60,11 +60,7 @@ public class OALDevice extends OALHandle
 	@Override
 	protected long allocate() throws SoundException 
 	{
-		long out;
-		clearError();
-		out = ALC11.alcOpenDevice(name);
-		errorCheck();
-		return out;
+		return ALC11.alcOpenDevice(name);
 	}
 
 	@Override

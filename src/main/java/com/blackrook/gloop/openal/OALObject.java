@@ -73,7 +73,7 @@ public abstract class OALObject
 
 	/**
 	 * Destroys this object.
-	 * @throws SoundException
+	 * @throws SoundException if an error occurred destroying the object.
 	 */
 	public final void destroy() throws SoundException 
 	{

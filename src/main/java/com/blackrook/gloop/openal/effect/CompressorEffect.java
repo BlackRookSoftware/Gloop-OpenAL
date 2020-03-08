@@ -37,7 +37,7 @@ public class CompressorEffect extends OALEffect
 
 	/** 
 	 * Sets if the effect is enabled. 
-	 * @param enabled 
+	 * @param enabled true if so, false if not.
 	 */
 	public final void setEnabled(boolean enabled)
 	{
@@ -45,6 +45,5 @@ public class CompressorEffect extends OALEffect
 		EXTEfx.alEffecti(getALId(), EXTEfx.AL_COMPRESSOR_ONOFF, enabled ? 1 : 0);
 		errorCheck();
 	}
-	
 	
 }

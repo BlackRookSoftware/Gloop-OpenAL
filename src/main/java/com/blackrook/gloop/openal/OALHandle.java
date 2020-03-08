@@ -64,7 +64,8 @@ public abstract class OALHandle
 	{
 		if (!allocated)
 		{
-			handle = allocate();
+			if ((handle = allocate()) == 0)
+				throw new SoundException();
 			system.registerHandle(this);
 		}
 		allocated = true;

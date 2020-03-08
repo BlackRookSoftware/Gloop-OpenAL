@@ -32,7 +32,7 @@ public abstract class OALFilter extends OALObject
 	{
 		int out;
 		AL11.alGetError();
-		try (MemoryStack stack = MemoryStack.stackGet())
+		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
 			EXTEfx.alGenFilters(buf);

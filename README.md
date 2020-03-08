@@ -19,9 +19,11 @@ Copyright (c) 2020 Black Rook Software.
 * [java.datatransfer](https://docs.oracle.com/en/java/javase/11/docs/api/java.datatransfer/module-summary.html)  
 * [java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
 
+
 ### Introduction
 
 This library contains classes for encapsulating LWJGL's OpenAL bindings.
+
 
 ### Why?
 
@@ -34,6 +36,7 @@ that jives with Java's Object-Oriented Paradigm.
 Contained in this release is a series of classes that are used for driving LWJGL's OpenAL bindings.
 
 The javadocs contain basic outlines of each package's contents.
+
 
 ### Compiling with Ant
 

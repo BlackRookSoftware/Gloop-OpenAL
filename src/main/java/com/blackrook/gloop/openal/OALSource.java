@@ -16,6 +16,7 @@ import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
+import com.blackrook.gloop.openal.exception.SoundException;
 import com.blackrook.gloop.openal.struct.MathUtils;
 import com.blackrook.gloop.openal.struct.ThreadUtils;
 
@@ -112,7 +113,7 @@ public final class OALSource extends OALObject
 	{
 		int out;
 		AL11.alGetError();
-		try (MemoryStack stack = MemoryStack.stackGet())
+		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
 			AL11.alGenSources(buf);
@@ -569,38 +570,52 @@ public final class OALSource extends OALObject
 	}
 
 	/**
+	 * Enqueues a single buffer on this Source, making sure that it is the only
+	 * Buffer enqueued by it. 
+	 * If <code>null</code> is provided, this clears the buffer assignment.
+	 * This does NOT check if the Source is currently playing before dequeuing
+	 * the bound buffers.
+	 * @param b	the Buffer to bind to this Source.
+	 */
+	public synchronized void setBuffer(OALBuffer b)
+	{
+		bufferQueue.clear();
+		if (b == null)
+		{
+			AL11.alSourcei(getALId(), AL11.AL_BUFFER, AL11.AL_NONE);
+			errorCheck();
+			buffer = null;
+		}
+		else
+		{
+			AL11.alSourcei(getALId(), AL11.AL_BUFFER, b.getALId());
+			errorCheck();
+			buffer = b;
+		}
+	}
+
+	/**
 	 * Returns the buffer dequeued, or null if no Buffer is queued. Thread safe.
 	 * This does NOT check if the Source is currently playing.
 	 * @return the buffer dequeued.
 	 */
 	public synchronized OALBuffer dequeueBuffer()
 	{
+		if (bufferQueue.isEmpty())
+			return null;
+		
+		clearError();
+		int bid = AL11.alSourceUnqueueBuffers(getALId());
+		errorCheck();
 		OALBuffer out = bufferQueue.pollFirst();
-		if (out != null)
-		{
-			clearError();
-			AL11.alSourceUnqueueBuffers(getALId());
-			errorCheck();
-			fireSourceBufferDequeuedEvent(this, out);
-		}
+		if (bid != out.getALId())
+			throw new SoundException("INTERNAL ERROR: Buffer dequeue mismatch!");
+		fireSourceBufferDequeuedEvent(this, out);
 		return out;
 	}
 
 	/**
-	 * Dequeues all of the buffers from this Source. Thread safe.
-	 * @return an array of the buffers dequeued, in the order dequeued.
-	 */
-	public synchronized OALBuffer[] dequeueAllBuffers()
-	{
-		OALBuffer[] out = new OALBuffer[bufferQueue.size()];
-		int i = 0;
-		while (!bufferQueue.isEmpty())
-			out[i++] = dequeueBuffer();
-		return out;
-	}
-	
-	/**
-	 * Enqueues a bunch of buffers onto this one.
+	 * Enqueues a bunch of buffers onto this source in the order specified.
 	 * @param buffers the buffers to enqueue.
 	 */
 	public synchronized void enqueueBuffers(OALBuffer... buffers)
@@ -628,32 +643,6 @@ public final class OALSource extends OALObject
 		}
 	}
 	
-	/**
-	 * Enqueues a single buffer on this Source, making sure that it is the only
-	 * Buffer enqueued by it. 
-	 * If <code>null</code> is provided, this clears the buffer assignment.
-	 * This does NOT check if the Source is currently playing before dequeuing
-	 * the bound buffers.
-	 * @param b	the Buffer to bind to this Source.
-	 */
-	public synchronized void setBuffer(OALBuffer b)
-	{
-		if (!bufferQueue.isEmpty())
-			dequeueAllBuffers();
-		if (b == null)
-		{
-			AL11.alSourcei(getALId(), AL11.AL_BUFFER, AL11.AL_NONE);
-			errorCheck();
-			buffer = null;
-		}
-		else
-		{
-			AL11.alSourcei(getALId(), AL11.AL_BUFFER, b.getALId());
-			errorCheck();
-			buffer = b;
-		}
-	}
-
 	/**
 	 * Gets how many buffers are queued up for this source.
 	 * @return the amount of buffers queued.
@@ -884,9 +873,10 @@ public final class OALSource extends OALObject
 	 */
 	protected final int getState()
 	{
+		clearError();
 		int out = AL11.alGetSourcei(getALId(), AL11.AL_SOURCE_STATE);
 		errorCheck();
-		return out;		
+		return out;
 	}
 
 	/**

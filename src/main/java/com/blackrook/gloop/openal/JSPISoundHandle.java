@@ -9,6 +9,7 @@ package com.blackrook.gloop.openal;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import javax.sound.sampled.AudioFileFormat;
@@ -144,6 +145,8 @@ public class JSPISoundHandle
 		private AudioFormat decodedAudioFormat;
 		/** Audio input stream to decode to. */
 		private AudioInputStream decodedAudioStream;
+		/** Bytes per sample of decoded data buffer. */
+		private byte[] decodedBytesPerSample;
 		
 		Decoder() throws IOException, UnsupportedAudioFileException
 		{
@@ -159,32 +162,71 @@ public class JSPISoundHandle
 				ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
 			);
 			decodedAudioStream = AudioSystem.getAudioInputStream(decodedAudioFormat, audioStream);
+			decodedBytesPerSample = new byte[(decodedAudioFormat.getSampleSizeInBits() >> 3) * decodedAudioFormat.getChannels()];
 		}
 		
 		/**
-		 * Reads a bunch of decoded bytes into the byte array.
-		 * @param b	the byte array.
-		 * @return how many bytes were written.
+		 * Reads a bunch of decoded PCM data into the byte buffer.
+		 * Bytes are loaded into the buffer until the end is reached or the end of the PCM data is reached.
+		 * The data is aligned to the amount of decoded bytes per sample, as a sanitation measure.
+		 * @param buffer the byte buffer.
+		 * @return the amount of bytes written to the buffer, or -1 if the end of the stream was reached before data could be written.
 		 * @throws IOException if the data can't be decompressed.
 		 */
-		public int readPCMBytes(byte[] b) throws IOException
+		public int readPCMData(ByteBuffer buffer) throws IOException
 		{
-			int i = 0;
-			int buf = 0;
-			while (i != b.length)
+			int b = 0;
+			int out = 0;
+			int s = 0;
+			while (buffer.remaining() >= decodedBytesPerSample.length && (b = decodedAudioStream.read()) >= 0)
 			{
-				buf = decodedAudioStream.read(b, i, b.length-i);
-				if (buf != -1)
-					i += buf;
-				else 
-					break;
+				decodedBytesPerSample[s++] = (byte)b;
+				if (s == decodedBytesPerSample.length)
+				{
+					buffer.put(decodedBytesPerSample);
+					out += decodedBytesPerSample.length;
+					s = 0;
+				}
 			}
+			
+			if (b < 0 && out == 0)
+				return -1;
 
-			return i;
+			return out;
 		}
 
 		/**
-		 * @return the audio format specs.
+		 * Reads a bunch of decoded PCM data into the byte array.
+		 * Bytes are loaded into the buffer until the end is reached or the end of the PCM data is reached.
+		 * The data is aligned to the amount of decoded bytes per sample, as a sanitation measure.
+		 * @param arr the byte array.
+		 * @param offset the offset into the array.
+		 * @return the amount of bytes written to the array, or -1 if the end of the stream was reached before data could be written.
+		 * @throws IOException if the data can't be decompressed.
+		 */
+		public int readPCMData(byte[] arr, int offset) throws IOException
+		{
+			int b = 0;
+			int out = 0;
+			int s = 0;
+			while (arr.length - (offset + out) >= decodedBytesPerSample.length && (b = decodedAudioStream.read()) >= 0)
+			{
+				decodedBytesPerSample[s++] = (byte)b;
+				if (s == decodedBytesPerSample.length)
+				{
+					System.arraycopy(decodedBytesPerSample, 0, arr, offset + out, decodedBytesPerSample.length);
+					out += decodedBytesPerSample.length;
+					s = 0;
+				}
+				arr[offset + out] = (byte)b;
+				out++;
+			}
+
+			return out;
+		}
+
+		/**
+		 * @return the audio format specs for the source file.
 		 * @see AudioFormat
 		 */
 		public final AudioFormat getFormat()
@@ -193,7 +235,7 @@ public class JSPISoundHandle
 		}
 		
 		/**
-		 * @return the audio file format specs.
+		 * @return the audio file format specs for the source file.
 		 * @see AudioFileFormat
 		 */
 		public final AudioFileFormat getFileFormat()
@@ -202,11 +244,19 @@ public class JSPISoundHandle
 		}
 
 		/**
-		 * @return the decodedAudioFormat
+		 * @return the audio format specs for what this decodes to.
 		 */
 		public final AudioFormat getDecodedAudioFormat()
 		{
 			return decodedAudioFormat;
+		}
+		
+		/**
+		 * @return the calculated decoded bytes per sample.
+		 */
+		public int getDecodedBytesPerSample() 
+		{
+			return decodedBytesPerSample.length;
 		}
 		
 		/**

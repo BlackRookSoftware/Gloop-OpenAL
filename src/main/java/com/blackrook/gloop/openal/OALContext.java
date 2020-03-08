@@ -11,9 +11,9 @@ import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC11;
 
-import com.blackrook.gloop.openal.enums.ContextAttribute;
 import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
@@ -23,6 +23,44 @@ import com.blackrook.gloop.openal.exception.SoundException;
  */
 public class OALContext extends OALHandle
 {
+	/**
+	 * Distance Model enumeration for internal OpenAL distance models for attenuating
+	 * the final gain of a Source in relation to the position/direction of the listener.
+	 */
+	public enum DistanceModel
+	{
+		NONE(AL11.AL_NONE),
+		INVERSE_DISTANCE(AL11.AL_INVERSE_DISTANCE),
+		INVERSE_DISTANCE_CLAMPED(AL11.AL_INVERSE_DISTANCE_CLAMPED),
+		LINEAR_DISTANCE(AL11.AL_LINEAR_DISTANCE),
+		LINEAR_DISTANCE_CLAMPED(AL11.AL_LINEAR_DISTANCE_CLAMPED),
+		EXPONENT_DISTANCE(AL11.AL_EXPONENT_DISTANCE),
+		EXPONENT_DISTANCE_CLAMPED(AL11.AL_EXPONENT_DISTANCE_CLAMPED);
+		
+		public final int alVal;
+		
+		private DistanceModel(int val) 
+		{alVal = val;}
+	}
+	
+	/**
+	 * Enumeration of Context creation attributes.
+	 */
+	public enum ContextAttribute
+	{
+		FREQUENCY(ALC11.ALC_FREQUENCY),
+		REFRESH(ALC11.ALC_REFRESH),
+		SYNC(ALC11.ALC_SYNC),
+		MONO_SOURCES(ALC11.ALC_MONO_SOURCES),
+		STEREO_SOURCES(ALC11.ALC_STEREO_SOURCES);
+		
+		public final int alVal;
+		
+		private ContextAttribute(int val) 
+		{alVal = val;}
+
+	}
+	
 	/**
 	 * A single pair of attribute-value.
 	 */
@@ -77,8 +115,6 @@ public class OALContext extends OALHandle
 	protected long allocate() throws SoundException 
 	{
 		long out;
-		clearError();
-		
 		if (attributeMap.isEmpty())
 		{
 			out = ALC11.alcCreateContext(device.getHandle(), (IntBuffer)null);
@@ -94,15 +130,13 @@ public class OALContext extends OALHandle
 			}
 			out = ALC11.alcCreateContext(device.getHandle(), attribs);
 		}
-		
-		errorCheck();
 		return out;
 	}
 
 	@Override
 	protected void free() throws SoundException 
 	{
-		ALC11.alcCloseDevice(getHandle());
+		ALC11.alcDestroyContext(getHandle());
 	}
 
 }
