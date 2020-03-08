@@ -110,23 +110,6 @@ public class OALContext extends OALHandle
 	/** The attribute values used to create this context. */
 	private Map<ContextAttribute, Integer> attributeMap;
 	
-	/** AL vendor name. */
-	private String vendorName;
-	/** AL version name. */
-	private String versionName;
-	/** AL renderer name. */
-	private String rendererName;
-	/** AL extensions. */
-	private Set<String> extensions;
-
-	/** Maximum effect slots per source. */
-	private int maxEffectSlots;
-	/** Distance model. */
-	private DistanceModel currentDistanceModel;
-	
-	/** Listener. */
-	private OALListener listener;
-
 	/** Map of created sources. */
 	private Map<Integer, OALSource> nameToSource;
 	/** Map of created buffers. */
@@ -138,6 +121,23 @@ public class OALContext extends OALHandle
 	/** Map of created effect slots. */
 	private Map<Integer, OALEffectSlot> nameToEffectSlot;
 	
+	/** AL vendor name. */
+	private String vendorName;
+	/** AL version name. */
+	private String versionName;
+	/** AL renderer name. */
+	private String rendererName;
+	/** AL extensions. */
+	private Set<String> extensions;
+
+	/** Listener. */
+	private OALListener listener;
+
+	/** Maximum effect slots per source. */
+	private int maxEffectSlots;
+	/** Distance model. */
+	private DistanceModel currentDistanceModel;
+	
 	OALContext(OALSystem system, OALDevice device, AttributeValue ... attributes)
 	{
 		super(system);
@@ -146,40 +146,19 @@ public class OALContext extends OALHandle
 		for (AttributeValue av : attributes)
 			attributeMap.put(av.attribute, av.value);
 
+		this.nameToSource = new HashMap<>();
+		this.nameToBuffer = new HashMap<>();
+		this.nameToFilter = new HashMap<>();
+		this.nameToEffect = new HashMap<>();
+		this.nameToEffectSlot = new HashMap<>();
+
 		this.vendorName = null;
 		this.versionName = null;
 		this.rendererName = null;
 		this.extensions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		this.listener = null;
 		
-		this.nameToSource = new HashMap<>();
-		this.nameToBuffer = new HashMap<>();
-		this.nameToFilter = new HashMap<>();
-		this.nameToEffect = new HashMap<>();
-		this.nameToEffectSlot = new HashMap<>();
 		create();
-	}
-
-	@Override
-	protected long allocate() throws SoundException 
-	{
-		long out;
-		if (attributeMap.isEmpty())
-		{
-			out = ALC11.alcCreateContext(device.getHandle(), (IntBuffer)null);
-		}
-		else
-		{
-			int[] attribs = new int[attributeMap.size() * 2];
-			int i = 0;
-			for (Map.Entry<ContextAttribute, Integer> entry : attributeMap.entrySet())
-			{
-				attribs[i + 0] = entry.getKey().alVal;
-				attribs[i + 1] = entry.getValue();
-			}
-			out = ALC11.alcCreateContext(device.getHandle(), attribs);
-		}
-		return out;
 	}
 
 	/**
@@ -252,19 +231,43 @@ public class OALContext extends OALHandle
 	}
 
 	@Override
-	protected void free() throws SoundException 
+	protected long allocate() throws SoundException 
+	{
+		long out;
+		if (attributeMap.isEmpty())
+		{
+			out = ALC11.alcCreateContext(device.getHandle(), (IntBuffer)null);
+		}
+		else
+		{
+			int[] attribs = new int[attributeMap.size() * 2];
+			int i = 0;
+			for (Map.Entry<ContextAttribute, Integer> entry : attributeMap.entrySet())
+			{
+				attribs[i + 0] = entry.getKey().alVal;
+				attribs[i + 1] = entry.getValue();
+			}
+			out = ALC11.alcCreateContext(device.getHandle(), attribs);
+		}
+		return out;
+	}
+
+	@Override
+	protected boolean free() throws SoundException 
 	{
 		ALC11.alcDestroyContext(getHandle());
+		return true;
 	}
 	
 	@Override
 	public void destroy() throws SoundException 
 	{
+		// sources must be first. sources are connected to everything else in a context.
 		destroyObjectsOnMap(nameToSource);
 		destroyObjectsOnMap(nameToBuffer);
 		destroyObjectsOnMap(nameToEffect);
 		destroyObjectsOnMap(nameToEffectSlot);
-		destroyObjectsOnMap(nameToSource);
+		destroyObjectsOnMap(nameToFilter);
 		super.destroy();
 	}
 	
@@ -293,11 +296,6 @@ public class OALContext extends OALHandle
 	void setMaxEffectSlots(int maxEffectSlots) 
 	{
 		this.maxEffectSlots = maxEffectSlots;
-	}
-
-	void setCurrentDistanceModel(DistanceModel currentDistanceModel) 
-	{
-		
 	}
 
 	void setListener(OALListener listener)
@@ -365,6 +363,11 @@ public class OALContext extends OALHandle
 		return maxEffectSlots;
 	}
 	
+	public void setCurrentDistanceModel(DistanceModel currentDistanceModel) 
+	{
+		this.currentDistanceModel = currentDistanceModel;
+	}
+
 	/**
 	 * @return this device's current distance model.
 	 */

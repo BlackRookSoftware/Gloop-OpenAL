@@ -23,12 +23,13 @@ public final class OALTest
 		AudioFormat format = decoder.getDecodedAudioFormat();
 
 		OALSystem system = new OALSystem();
-		System.out.println("OpenAL Vendor:     " + system.getCurrentContext().getVendorName());
-		System.out.println("OpenAL Version:    " + system.getCurrentContext().getVersionName());
-		System.out.println("OpenAL Renderer:   " + system.getCurrentContext().getRendererName());
-		System.out.println("OpenAL Extensions: " + system.getCurrentContext().getExtensions());
+		OALContext context = system.getCurrentContext();
+		System.out.println("OpenAL Vendor:     " + context.getVendorName());
+		System.out.println("OpenAL Version:    " + context.getVersionName());
+		System.out.println("OpenAL Renderer:   " + context.getRendererName());
+		System.out.println("OpenAL Extensions: " + context.getExtensions());
 		
-		OALSource source = system.getCurrentContext().createSource();
+		OALSource source = context.createSource();
 		source.reset();
 		source.addSourceListener(new OALSourceListener()
 		{
@@ -69,7 +70,7 @@ public final class OALTest
 			}
 		});
 
-		OALBuffer[] buffers = system.getCurrentContext().createBuffers(2);
+		OALBuffer[] buffers = context.createBuffers(2);
 		buffers[0].setFrequencyAndFormat(format);
 		buffers[1].setFrequencyAndFormat(format);
 

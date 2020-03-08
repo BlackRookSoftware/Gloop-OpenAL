@@ -64,9 +64,9 @@ public class OALDevice extends OALHandle
 	}
 
 	@Override
-	protected void free() throws SoundException 
+	protected boolean free() throws SoundException 
 	{
-		ALC11.alcCloseDevice(getHandle());
+		return ALC11.alcCloseDevice(getHandle());
 	}
 
 }

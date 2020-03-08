@@ -65,7 +65,7 @@ public abstract class OALHandle
 		if (!allocated)
 		{
 			if ((handle = allocate()) == 0)
-				throw new SoundException();
+				throw new SoundException("Handle for " + getClass().getSimpleName() + " could not be allocated!");
 			system.registerHandle(this);
 		}
 		allocated = true;
@@ -80,9 +80,11 @@ public abstract class OALHandle
 	{
 		if (allocated)
 		{
-			free();
+			if (!free())
+				throw new SoundException("Handle for " + getClass().getSimpleName() + " could not be deleted!");				
 			handle = 0L;
 			system.unregisterHandle(this);
+			system = null;
 		}
 		allocated = false;
 	}
@@ -98,9 +100,10 @@ public abstract class OALHandle
 	/**
 	 * Destroys this object (deallocates it on OpenAL).
 	 * Called by {@link #destroy()}.
+	 * @return true if deleted, false if not.
 	 * @throws SoundException if the deallocation cannot happen.
 	 */
-	protected abstract void free() throws SoundException;
+	protected abstract boolean free() throws SoundException;
 	
 	/**
 	 * Convenience method for clearing the OpenAL error state.

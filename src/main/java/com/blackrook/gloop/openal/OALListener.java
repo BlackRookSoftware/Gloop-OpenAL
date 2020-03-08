@@ -19,6 +19,7 @@ public class OALListener
 {
 	/** This object's owning context. */
 	private OALContext context;
+	
 	/** Listener's position. */
 	protected float[] position;
 	/** Listener's velocity vector. */

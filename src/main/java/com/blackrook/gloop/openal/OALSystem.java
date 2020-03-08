@@ -7,33 +7,16 @@
  ******************************************************************************/
 package com.blackrook.gloop.openal;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC11;
 import org.lwjgl.openal.EXTEfx;
 
-import com.blackrook.gloop.openal.OALContext.DistanceModel;
-import com.blackrook.gloop.openal.effect.AutowahEffect;
-import com.blackrook.gloop.openal.effect.ChorusEffect;
-import com.blackrook.gloop.openal.effect.CompressorEffect;
-import com.blackrook.gloop.openal.effect.DistortionEffect;
-import com.blackrook.gloop.openal.effect.EchoEffect;
-import com.blackrook.gloop.openal.effect.EqualizerEffect;
-import com.blackrook.gloop.openal.effect.FlangerEffect;
-import com.blackrook.gloop.openal.effect.FrequencyShiftEffect;
-import com.blackrook.gloop.openal.effect.PitchShiftEffect;
-import com.blackrook.gloop.openal.effect.ReverbEffect;
-import com.blackrook.gloop.openal.effect.RingModulatorEffect;
-import com.blackrook.gloop.openal.effect.VocalMorpherEffect;
 import com.blackrook.gloop.openal.exception.SoundException;
 import com.blackrook.gloop.openal.exception.SoundSystemException;
-import com.blackrook.gloop.openal.filter.BandPassFilter;
-import com.blackrook.gloop.openal.filter.HighPassFilter;
-import com.blackrook.gloop.openal.filter.LowPassFilter;
 
 /**
  * This class is a central sound system class designed to manage an OpenAL instance and environment.
@@ -46,8 +29,10 @@ public final class OALSystem
 	/** The current context instance. */
 	private OALContext currentContext;
 
-	/** Handle references. */
-	private Set<OALHandle> createdHandles;
+	/** Map of created devices. */
+	private Map<Long, OALDevice> handleToDevice;
+	/** Map of created devices. */
+	private Map<Long, OALContext> handleToContext;
 
 	/**
 	 * Creates a new SoundSystem with the current device as a new sound device and 
@@ -65,7 +50,8 @@ public final class OALSystem
 	 */
 	public OALSystem(String deviceName)
 	{
-		createdHandles = new HashSet<>();
+		handleToDevice = new HashMap<>();
+		handleToContext = new HashMap<>();
 		String dname = deviceName != null ? "device \""+deviceName+"\"" : "default device";
 		
 		// create device.
@@ -90,10 +76,12 @@ public final class OALSystem
 	 */
 	void registerHandle(OALHandle handle)
 	{
-		synchronized (createdHandles)
-		{
-			createdHandles.add(handle);
-		}
+		if (handle instanceof OALContext)
+			registerHandleOnMap((OALContext)handle, handleToContext);
+		else if (handle instanceof OALDevice)
+			registerHandleOnMap((OALDevice)handle, handleToDevice);
+		else
+			throw new SoundSystemException("Unknown handle type.");
 	}
 
 	/**
@@ -102,9 +90,40 @@ public final class OALSystem
 	 */
 	void unregisterHandle(OALHandle handle)
 	{
-		synchronized (createdHandles)
+		if (handle instanceof OALContext)
+			unregisterHandleOnMap((OALContext)handle, handleToContext);
+		else if (handle instanceof OALDevice)
+			unregisterHandleOnMap((OALDevice)handle, handleToDevice);
+		else
+			throw new SoundSystemException("Unknown handle type.");
+	}
+
+	private <H extends OALHandle> void registerHandleOnMap(H obj, final Map<Long, H> map)
+	{
+		synchronized (map) 
 		{
-			createdHandles.remove(handle);
+			map.put(obj.getHandle(), obj);
+		}
+	}
+
+	private <H extends OALHandle> void unregisterHandleOnMap(H obj, final Map<Long, H> map)
+	{
+		synchronized (map) 
+		{
+			map.remove(obj.getHandle());
+		}
+	}
+
+	private <H extends OALHandle> void destroyHandlesOnMap(final Map<Long, H> map)
+	{
+		synchronized (map) 
+		{
+			// need to copy set contents - deleting these handles will affect the set as we iterate.
+			OALHandle[] toDelete = new OALHandle[map.size()];
+			map.values().toArray(toDelete);
+			for (int i = 0; i < toDelete.length; i++)
+				toDelete[i].destroy();
+			map.clear();
 		}
 	}
 
@@ -118,35 +137,6 @@ public final class OALSystem
 		getContextError();
 	}
 	
-	/**
-	 * Suspends processing of the current context.
-	 */
-	public void suspendCurrentContext()
-	{
-		ALC11.alcSuspendContext(currentContext.getHandle());
-		getContextError();
-	}
-	
-	/**
-	 * Resumes processing of the current context.
-	 */
-	public void processCurrentContext()
-	{
-		ALC11.alcProcessContext(currentContext.getHandle());
-		getContextError();
-	}
-	
-	/**
-	 * Convenience method for checking for an OpenAL error and throwing a SoundException
-	 * if an error is raised. 
-	 */
-	public void getContextError()
-	{
-		int error = ALC11.alcGetError(currentDevice.getHandle());
-		if (error != AL11.AL_NO_ERROR)
-			throw new SoundException("OpenAL returned \""+ALC11.alcGetString(currentDevice.getHandle(), error)+"\".");
-	}
-
 	/**
 	 * Allocates a new default device.
 	 * @return the newly allocated device.
@@ -183,6 +173,17 @@ public final class OALSystem
 	}
 	
 	/**
+	 * Convenience method for checking for an OpenAL error and throwing a SoundException
+	 * if an error is raised. 
+	 */
+	public void getContextError()
+	{
+		int error = ALC11.alcGetError(currentDevice.getHandle());
+		if (error != AL11.AL_NO_ERROR)
+			throw new SoundException("OpenAL returned \""+ALC11.alcGetString(currentDevice.getHandle(), error)+"\".");
+	}
+
+	/**
 	 * @return the current device.
 	 */
 	public OALDevice getCurrentDevice() 
@@ -199,6 +200,24 @@ public final class OALSystem
 	}
 	
 	/**
+	 * Suspends processing of the current context.
+	 */
+	public void suspendCurrentContext()
+	{
+		ALC11.alcSuspendContext(currentContext.getHandle());
+		getContextError();
+	}
+
+	/**
+	 * Resumes processing of the current context.
+	 */
+	public void processCurrentContext()
+	{
+		ALC11.alcProcessContext(currentContext.getHandle());
+		getContextError();
+	}
+
+	/**
 	 * Runs all Shut Down hooks, destroys all contexts and closes all open devices.
 	 */
 	public void shutDown()
@@ -214,16 +233,8 @@ public final class OALSystem
 		currentContext = null;
 		currentDevice = null;
 
-		// TODO: Gather and sort by object type - some handles need to be deleted before others.
-		synchronized (createdHandles)
-		{
-			// need to copy set contents - deleting these handles will affect the set as we iterate.
-			OALHandle[] toDelete = new OALHandle[createdHandles.size()];
-			createdHandles.toArray(toDelete);
-			createdHandles.clear();
-			for (int i = 0; i < toDelete.length; i++)
-				toDelete[i].destroy();
-		}			
+		destroyHandlesOnMap(handleToContext);
+		destroyHandlesOnMap(handleToDevice);
 	}
 
 	@Override
