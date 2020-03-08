@@ -29,12 +29,9 @@ public class OALEffectSlot extends OALObject
 	/** Does this auto update itself if the Effect changes? */
 	protected boolean autoUpdating;
 	
-	/**
-	 * Creates a new auxiliary effect slot.
-	 */
-	OALEffectSlot(OALSystem system)
+	OALEffectSlot(OALContext context)
 	{
-		super(system);
+		super(context);
 		setEffect(null);
 		setAutoUpdating(true);
 	}
@@ -43,7 +40,7 @@ public class OALEffectSlot extends OALObject
 	protected int allocate() throws SoundException
 	{
 		int out;
-		AL11.alGetError();
+		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
@@ -57,8 +54,8 @@ public class OALEffectSlot extends OALObject
 	@Override
 	protected final void free() throws SoundException
 	{
-		AL11.alGetError();
-		EXTEfx.alDeleteAuxiliaryEffectSlots(getALId());
+		clearError();
+		EXTEfx.alDeleteAuxiliaryEffectSlots(getName());
 		errorCheck();
 	}
 
@@ -69,7 +66,7 @@ public class OALEffectSlot extends OALObject
 	public void setEffect(OALEffect effect)
 	{
 		this.effect = effect;
-		EXTEfx.alAuxiliaryEffectSloti(getALId(), EXTEfx.AL_EFFECTSLOT_EFFECT, effect == null ? EXTEfx.AL_EFFECT_NULL : effect.getALId());
+		EXTEfx.alAuxiliaryEffectSloti(getName(), EXTEfx.AL_EFFECTSLOT_EFFECT, effect == null ? EXTEfx.AL_EFFECT_NULL : effect.getName());
 		errorCheck();
 	}
 	
@@ -107,7 +104,7 @@ public class OALEffectSlot extends OALObject
 	public void setGain(float gain)
 	{
 		slotGain = gain;
-		EXTEfx.alAuxiliaryEffectSlotf(getALId(), EXTEfx.AL_EFFECTSLOT_GAIN, gain);
+		EXTEfx.alAuxiliaryEffectSlotf(getName(), EXTEfx.AL_EFFECTSLOT_GAIN, gain);
 		errorCheck();
 	}
 
@@ -127,7 +124,7 @@ public class OALEffectSlot extends OALObject
 	public final void setAutoUpdating(boolean autoUpdate)
 	{
 		this.autoUpdating = autoUpdate;
-		EXTEfx.alAuxiliaryEffectSloti(getALId(), EXTEfx.AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, autoUpdate ? AL11.AL_TRUE : AL11.AL_FALSE);
+		EXTEfx.alAuxiliaryEffectSloti(getName(), EXTEfx.AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, autoUpdate ? AL11.AL_TRUE : AL11.AL_FALSE);
 		errorCheck();
 	}
 

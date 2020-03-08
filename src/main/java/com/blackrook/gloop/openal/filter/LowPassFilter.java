@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.filter;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALFilter;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -24,9 +24,9 @@ public class LowPassFilter extends OALFilter
 	/** High-frequency low-pass gain. */
 	protected float gainHF;
 	
-	public LowPassFilter(OALSystem system)
+	public LowPassFilter(OALContext context)
 	{
-		super(system, EXTEfx.AL_FILTER_LOWPASS);
+		super(context, EXTEfx.AL_FILTER_LOWPASS);
 		setGain(EXTEfx.AL_LOWPASS_DEFAULT_GAIN);
 		setHFGain(EXTEfx.AL_LOWPASS_DEFAULT_GAINHF);
 	}
@@ -46,7 +46,7 @@ public class LowPassFilter extends OALFilter
 	public void setGain(float gain)
 	{
 		this.gain = gain;
-		EXTEfx.alFilterf(getALId(), EXTEfx.AL_LOWPASS_GAIN, MathUtils.clampValue(gain, (float)EXTEfx.AL_LOWPASS_MIN_GAIN, EXTEfx.AL_LOWPASS_MAX_GAIN));
+		EXTEfx.alFilterf(getName(), EXTEfx.AL_LOWPASS_GAIN, MathUtils.clampValue(gain, (float)EXTEfx.AL_LOWPASS_MIN_GAIN, EXTEfx.AL_LOWPASS_MAX_GAIN));
 		errorCheck();
 	}
 	
@@ -65,7 +65,7 @@ public class LowPassFilter extends OALFilter
 	public void setHFGain(float gain)
 	{
 		this.gainHF = gain;
-		EXTEfx.alFilterf(getALId(), EXTEfx.AL_LOWPASS_GAINHF, MathUtils.clampValue(gain, (float)EXTEfx.AL_LOWPASS_MIN_GAINHF, EXTEfx.AL_LOWPASS_MAX_GAINHF));
+		EXTEfx.alFilterf(getName(), EXTEfx.AL_LOWPASS_GAINHF, MathUtils.clampValue(gain, (float)EXTEfx.AL_LOWPASS_MIN_GAINHF, EXTEfx.AL_LOWPASS_MAX_GAINHF));
 		errorCheck();
 	}
 	

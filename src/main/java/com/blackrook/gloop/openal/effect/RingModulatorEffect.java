@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -37,9 +37,9 @@ public class RingModulatorEffect extends OALEffect
 	/** Ring modulator waveform. */
 	protected WaveForm waveForm;
 
-	public RingModulatorEffect(OALSystem system)
+	public RingModulatorEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_RING_MODULATOR);
+		super(context, EXTEfx.AL_EFFECT_RING_MODULATOR);
 		setWaveform(WaveForm.SINUSOID);
 		setFrequency(EXTEfx.AL_RING_MODULATOR_DEFAULT_FREQUENCY);
 		setHighPassCutoff(EXTEfx.AL_RING_MODULATOR_DEFAULT_HIGHPASS_CUTOFF);
@@ -60,7 +60,7 @@ public class RingModulatorEffect extends OALEffect
 	public final void setWaveform(WaveForm waveform)
 	{
 		this.waveForm = waveform;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_RING_MODULATOR_WAVEFORM, waveform.alVal);
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_RING_MODULATOR_WAVEFORM, waveform.alVal);
 		errorCheck();
 	}
 
@@ -79,7 +79,7 @@ public class RingModulatorEffect extends OALEffect
 	public final void setFrequency(float frequency)
 	{
 		this.frequency = frequency;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_RING_MODULATOR_FREQUENCY, MathUtils.clampValue(frequency, EXTEfx.AL_RING_MODULATOR_MIN_FREQUENCY, EXTEfx.AL_RING_MODULATOR_MAX_FREQUENCY));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_RING_MODULATOR_FREQUENCY, MathUtils.clampValue(frequency, EXTEfx.AL_RING_MODULATOR_MIN_FREQUENCY, EXTEfx.AL_RING_MODULATOR_MAX_FREQUENCY));
 		errorCheck();
 	}
 
@@ -98,7 +98,7 @@ public class RingModulatorEffect extends OALEffect
 	public final void setHighPassCutoff(float highPassCutoff)
 	{
 		this.highPassCutoff = highPassCutoff;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_RING_MODULATOR_HIGHPASS_CUTOFF, MathUtils.clampValue(highPassCutoff, EXTEfx.AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF, EXTEfx.AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_RING_MODULATOR_HIGHPASS_CUTOFF, MathUtils.clampValue(highPassCutoff, EXTEfx.AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF, EXTEfx.AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF));
 		errorCheck();
 	}
 

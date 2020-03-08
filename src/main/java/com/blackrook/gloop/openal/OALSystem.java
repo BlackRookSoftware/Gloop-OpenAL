@@ -41,22 +41,13 @@ import com.blackrook.gloop.openal.filter.LowPassFilter;
  */
 public final class OALSystem
 {
-	/** This device. */
-	private OALDevice alcDevice;
-	/** This context instance. */
-	private OALContext alcContext;
-	/** Distance model. */
-	private DistanceModel currentDistanceModel;
+	/** The current device. */
+	private OALDevice currentDevice;
+	/** The current context instance. */
+	private OALContext currentContext;
 
-	/** Listener. */
-	private OALListener listener;
-	/** Object references. */
-	private Set<OALObject> createdObjects;
 	/** Handle references. */
 	private Set<OALHandle> createdHandles;
-
-	/** Maximum effect slots per source. */
-	private int maxEffectSlots;
 
 	/**
 	 * Creates a new SoundSystem with the current device as a new sound device and 
@@ -74,49 +65,25 @@ public final class OALSystem
 	 */
 	public OALSystem(String deviceName)
 	{
-		createdObjects = new HashSet<>();
 		createdHandles = new HashSet<>();
 		String dname = deviceName != null ? "device \""+deviceName+"\"" : "default device";
 		
 		// create device.
-		alcDevice = createDevice(deviceName);
-		alcContext = createContext(alcDevice);
-		if (!ALC11.alcMakeContextCurrent(alcContext.getHandle()))
+		currentDevice = createDevice(deviceName);
+		currentContext = createContext(currentDevice);
+		if (!ALC11.alcMakeContextCurrent(currentContext.getHandle()))
 			throw new SoundSystemException("The context for " + dname + " couldn't be made current.");
 		
-		AL.createCapabilities(alcDevice.getCapabilities());
-		getError();
+		AL.createCapabilities(currentDevice.getCapabilities());
 		
-		maxEffectSlots = ALC11.alcGetInteger(alcDevice.getHandle(), EXTEfx.ALC_MAX_AUXILIARY_SENDS);
-		getError();
-		
-		listener = new OALListener();
-	}
-	
-	/**
-	 * Adds an object's reference as a managed object.
-	 * @param object the object to add.
-	 */
-	void registerObject(OALObject object)
-	{
-		synchronized (createdObjects)
-		{
-			createdObjects.add(object);
-		}
+		currentContext.setVendorName(AL11.alGetString(AL11.AL_VENDOR));
+		currentContext.setVersionName(AL11.alGetString(AL11.AL_VERSION));
+		currentContext.setRendererName(AL11.alGetString(AL11.AL_RENDERER));
+		currentContext.setExtensions(AL11.alGetString(AL11.AL_EXTENSIONS).split("(\\s|\\n)+"));
+		currentContext.setMaxEffectSlots(ALC11.alcGetInteger(currentDevice.getHandle(), EXTEfx.ALC_MAX_AUXILIARY_SENDS));
+		currentContext.setListener(new OALListener(currentContext));
 	}
 
-	/**
-	 * Removes an object's reference as a managed object.
-	 * @param object the object to add.
-	 */
-	void unregisterObject(OALObject object)
-	{
-		synchronized (createdObjects)
-		{
-			createdObjects.remove(object);
-		}
-	}
-	
 	/**
 	 * Adds a handle's reference as a managed object.
 	 * @param handle the handle to add.
@@ -142,12 +109,22 @@ public final class OALSystem
 	}
 
 	/**
+	 * Sets a new context as current.
+	 * @param context the context to make current, or null for no context.
+	 */
+	public void setCurrentContext(OALContext context)
+	{
+		ALC11.alcMakeContextCurrent(context != null ? context.getHandle() : 0L);
+		getContextError();
+	}
+	
+	/**
 	 * Suspends processing of the current context.
 	 */
 	public void suspendCurrentContext()
 	{
-		ALC11.alcSuspendContext(alcContext.getHandle());
-		getError();
+		ALC11.alcSuspendContext(currentContext.getHandle());
+		getContextError();
 	}
 	
 	/**
@@ -155,10 +132,21 @@ public final class OALSystem
 	 */
 	public void processCurrentContext()
 	{
-		ALC11.alcProcessContext(alcContext.getHandle());
-		getError();
+		ALC11.alcProcessContext(currentContext.getHandle());
+		getContextError();
 	}
 	
+	/**
+	 * Convenience method for checking for an OpenAL error and throwing a SoundException
+	 * if an error is raised. 
+	 */
+	public void getContextError()
+	{
+		int error = ALC11.alcGetError(currentDevice.getHandle());
+		if (error != AL11.AL_NO_ERROR)
+			throw new SoundException("OpenAL returned \""+ALC11.alcGetString(currentDevice.getHandle(), error)+"\".");
+	}
+
 	/**
 	 * Allocates a new default device.
 	 * @return the newly allocated device.
@@ -195,354 +183,21 @@ public final class OALSystem
 	}
 	
 	/**
-	 * Allocates a new source and assigns it internally to the current context.
-	 * @return the newly allocated source.
-	 * @throws SoundSystemException if the source can't be created or there is no current context selected.
+	 * @return the current device.
 	 */
-	public OALSource createSource()
+	public OALDevice getCurrentDevice() 
 	{
-		return createSource(false);
-	}
-	
-	/**
-	 * Allocates a new source and assigns it internally to the current context.
-	 * @param autoVelocity if true, set auto velocity to on for this Source.
-	 * @return the newly allocated source.
-	 * @throws SoundSystemException if the source can't be created.
-	 */
-	public OALSource createSource(boolean autoVelocity)
-	{
-		return new OALSource(this, autoVelocity, maxEffectSlots);
+		return currentDevice;
 	}
 
 	/**
-	 * Allocates a new buffer for loading data into. Buffers are independent
-	 * of device context. 
-	 * @return	a newly allocated buffer.
-	 * @throws	SoundException	if the Buffer can't be allocated somehow.
+	 * @return the current context.
 	 */
-	public OALBuffer createBuffer()
+	public OALContext getCurrentContext() 
 	{
-		return new OALBuffer(this);
+		return currentContext;
 	}
 	
-	/**
-	 * Allocates a new buffer for loading data into. Buffers are independent
-	 * of device context. 
-	 * @param amount the amount of buffers to create.
-	 * @return a set of newly allocated buffers.
-	 * @throws SoundException if the Buffer can't be allocated somehow.
-	 */
-	public OALBuffer[] createBuffers(int amount)
-	{
-		OALBuffer[] out = new OALBuffer[amount];
-		for (int i = 0; i < amount; i++)
-			out[i] = createBuffer();
-		return out;
-	}
-	
-	/**
-	 * Convenience method for checking for an OpenAL error and throwing a SoundException
-	 * if an error is raised. 
-	 */
-	public void getError()
-	{
-		int error = AL11.alGetError();
-		if (error != AL11.AL_NO_ERROR)
-			throw new SoundException("OpenAL returned \""+AL11.alGetString(error)+"\".");
-	}
-	
-	/**
-	 * Convenience method for checking for an OpenAL error and throwing a SoundException
-	 * if an error is raised. 
-	 */
-	public void getContextError()
-	{
-		int error = ALC11.alcGetError(alcDevice.getHandle());
-		if (error != AL11.AL_NO_ERROR)
-			throw new SoundException("OpenAL returned \""+ALC11.alcGetString(alcDevice.getHandle(), error)+"\".");
-	}
-	
-	/**
-	 * Allocates a new buffer with data loaded into it. All of the sound data
-	 * readable by the SoundData instance is read into the buffer.
-	 * If you know that the data being loaded is very long or large, you
-	 * should consider using a Streaming Source to conserve memory.
-	 * Buffers are independant of device context. 
-	 * @param handle the handle to the sound data to load into this buffer.
-	 * @return a newly allocated buffer.
-	 * @throws IOException if the data can't be read.
-	 * @throws SoundException if the Buffer can't be allocated somehow.
-	 */
-	public OALBuffer createBuffer(JSPISoundHandle handle) throws IOException
-	{
-		return new OALBuffer(this, handle);
-	}
-	
-	/**
-	 * Allocates a new buffer with data loaded into it. All of the sound data
-	 * readable by the SoundDataDecoder instance is read into the buffer.
-	 * If you know that the data being loaded is very long or large, you
-	 * should consider using a Streaming Source to conserve memory.
-	 * Buffers are independent of device context. 
-	 * @param dataDecoder the decoder of the sound data to load into this buffer.
-	 * @return a newly allocated buffer.
-	 * @throws IOException if the data can't be read.
-	 * @throws SoundException if the Buffer can't be allocated somehow.
-	 */
-	public OALBuffer createBuffer(JSPISoundHandle.Decoder dataDecoder) throws IOException
-	{
-		return new OALBuffer(this, dataDecoder);
-	}
-	
-	/**
-	 * Creates a new Auxiliary Effect Slot for adding a filter and effects to Sources.
-	 * These slots can be added to sources. If you have more than one source 
-	 * that uses the same sets of filters and effects, it might be better to
-	 * bind one slot to more than one source to save memory, especially if you
-	 * need to alter an effect of filter for more than one sound that is playing.
-	 * @return a new AuxEffectSlot object.
-	 * @throws SoundException	if the slot can't be allocated somehow.
-	 */
-	public OALEffectSlot createEffectSlot()
-	{
-		return new OALEffectSlot(this);
-	}
-	
-	/**
-	 * Creates a new Autowah effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public AutowahEffect createAutowahEffect()
-	{
-		return new AutowahEffect(this);
-	}
-	
-	/**
-	 * Creates a new Chorus effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public ChorusEffect createChorusEffect()
-	{
-		return new ChorusEffect(this);
-	}
-	
-	/**
-	 * Creates a new Compressor effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public CompressorEffect createCompressorEffect()
-	{
-		return new CompressorEffect(this);
-	}
-	
-	/**
-	 * Creates a new Distortion effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public DistortionEffect createDistortionEffect()
-	{
-		return new DistortionEffect(this);
-	}
-	
-	/**
-	 * Creates a new Echo effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public EchoEffect createEchoEffect()
-	{
-		return new EchoEffect(this);
-	}
-	
-	/**
-	 * Creates a new Equalizer effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public EqualizerEffect createEqualizerEffect()
-	{
-		return new EqualizerEffect(this);
-	}
-	
-	/**
-	 * Creates a new Flanger effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public FlangerEffect createFlangerEffect()
-	{
-		return new FlangerEffect(this);
-	}
-	
-	/**
-	 * Creates a new Frequency Shift effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public FrequencyShiftEffect createFrequencyShiftEffect()
-	{
-		return new FrequencyShiftEffect(this);
-	}
-	
-	/**
-	 * Creates a new Pitch Shift effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public PitchShiftEffect createPitchShiftEffect()
-	{
-		return new PitchShiftEffect(this);
-	}
-	
-	/**
-	 * Creates a new Reverb effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public ReverbEffect createReverbEffect()
-	{
-		return new ReverbEffect(this);
-	}
-	
-	/**
-	 * Creates a new Ring Modulator effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public RingModulatorEffect createRingModulatorEffect()
-	{
-		return new RingModulatorEffect(this);
-	}
-	
-	/**
-	 * Creates a new Vocal Morpher effect.
-	 * @return	a new effect of this type with default values set.
-	 */
-	public VocalMorpherEffect createVocalMorpherEffect()
-	{
-		return new VocalMorpherEffect(this);
-	}
-	
-	/**
-	 * Creates a new High Pass filter.
-	 * @return	a new filter of this type with default values set.
-	 */
-	public HighPassFilter createHighPassFilter()
-	{
-		return new HighPassFilter(this);
-	}
-	
-	/**
-	 * Creates a new Low Pass filter.
-	 * @return	a new filter of this type with default values set.
-	 */
-	public LowPassFilter createLowPassFilter()
-	{
-		return new LowPassFilter(this);
-	}
-	
-	/**
-	 * Creates a new Band Pass filter.
-	 * @return	a new filter of this type with default values set.
-	 */
-	public BandPassFilter createBandPassFilter()
-	{
-		return new BandPassFilter(this);
-	}
-	
-	/**
-	 * Get the reference to this system's listener.
-	 * @return		the Listener of this environment.
-	 */
-	public OALListener getListener()
-	{
-		return listener;
-	}
-
-	/**
-	 * @return the name of the current OpenAL renderer (device). 
-	 */
-	public String getALRendererName()
-	{
-		return AL11.alGetString(AL11.AL_RENDERER);
-	}
-	
-	/**
-	 * @return OpenAL's version string. 
-	 */
-	public String getALVersionName()
-	{
-		return AL11.alGetString(AL11.AL_VERSION);
-	}
-
-	/**
-	 * @return the name of the current OpenAL vendor. 
-	 */
-	public String getALVendorName()
-	{
-		return AL11.alGetString(AL11.AL_VENDOR);
-	}
-	
-	/**
-	 * @return the names of all available OpenAL extensions (newline-separated). 
-	 */
-	public String getALExtensions()
-	{
-		return AL11.alGetString(AL11.AL_EXTENSIONS);
-	}
-	
-	/**
-	 * Sets the sound environment's Doppler Factor.
-	 * 0 = disabled.
-	 * @param f the Doppler factor. 
-	 */
-	public void setDopplerFactor(float f)
-	{
-		AL11.alDopplerFactor(f);
-		getError();
-	}
-
-	/**
-	 * @return the sound environment's Doppler Factor.
-	 */
-	public float getDopplerFactor()
-	{
-		return AL11.alGetFloat(AL11.AL_DOPPLER_FACTOR);
-	}
-
-	/**
-	 * Sets the sound environment's speed of sound factor.
-	 * @param s the speed of sound. 
-	 */
-	public void setSpeedOfSound(float s)
-	{
-		AL11.alDopplerVelocity(s);
-		getError();
-	}
-
-	/**
-	 * @return the sound environment's speed of sound factor.
-	 */
-	public float getSpeedOfSound()
-	{
-		// AL_DOPPLER_VELOCITY - for some reason, not defined in AL11
-		return AL11.alGetFloat(0xC001);
-	}
-	
-	/**
-	 * Sets the current context's distance model.
-	 * By default, this is DistanceModel.INVERSE_DISTANCE_CLAMPED. 
-	 * @param model the distance model to use.
-	 */
-	public void setDistanceModel(DistanceModel model)
-	{
-		AL11.alDistanceModel(model.alVal);
-		getError();
-		currentDistanceModel = model;
-	}
-
-	/**
-	 * @return the current context's distance model.
-	 */
-	public DistanceModel getDistanceModel()
-	{
-		return currentDistanceModel;
-	}
-
 	/**
 	 * Runs all Shut Down hooks, destroys all contexts and closes all open devices.
 	 */
@@ -551,23 +206,13 @@ public final class OALSystem
 		// suspend context before we delete. 
 		suspendCurrentContext();
 		getContextError();
-
-		// TODO: Gather and sort by object type - some objects need to be deleted before others.
-		synchronized (createdObjects)
-		{
-			// need to copy set contents - deleting these objects will affect the set as we iterate.
-			OALObject[] toDelete = new OALObject[createdObjects.size()];
-			createdObjects.toArray(toDelete);
-			createdObjects.clear();
-			for (int i = 0; i < toDelete.length; i++)
-				toDelete[i].destroy();
-		}			
-
-		ALC11.alcMakeContextCurrent(0L);
+		getCurrentContext().destroy();
+		getContextError();
+		setCurrentContext(null);
 		getContextError();
 		
-		alcContext = null;
-		alcDevice = null;
+		currentContext = null;
+		currentDevice = null;
 
 		// TODO: Gather and sort by object type - some handles need to be deleted before others.
 		synchronized (createdHandles)
@@ -587,6 +232,8 @@ public final class OALSystem
 		shutDown();
 		super.finalize();
 	}
+	
+	
 	
 }
 

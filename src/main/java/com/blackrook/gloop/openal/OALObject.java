@@ -19,8 +19,8 @@ import com.blackrook.gloop.openal.exception.SoundException;
  */
 public abstract class OALObject
 {
-	/** This object's managing system. */
-	private OALSystem system;
+	/** This object's owning context. */
+	private OALContext context;
 	/** This object's ALId. */
 	private int alId;
 	/** Was this object allocated? */
@@ -28,21 +28,21 @@ public abstract class OALObject
 
 	/**
 	 * Allocates a new OpenAL object. Calls allocate().
-	 * @param system the managing system.
+	 * @param context the managing context.
 	 */
-	protected OALObject(OALSystem system)
+	protected OALObject(OALContext context)
 	{
-		this.system = system;
+		this.context = context;
 		clearError();
 		this.alId = allocate(); 
-		system.registerObject(this);
+		context.registerObject(this);
 		this.allocated = true; 
 	}
 	
 	/**
 	 * @return this OALObject's OpenAL object id.
 	 */
-	public final int getALId()
+	public final int getName()
 	{
 		return alId;
 	}
@@ -75,13 +75,14 @@ public abstract class OALObject
 	 * Destroys this object.
 	 * @throws SoundException if an error occurred destroying the object.
 	 */
-	public final void destroy() throws SoundException 
+	public void destroy() throws SoundException 
 	{
 		if (allocated)
 		{
 			free();
 			alId = 0;
-			system.unregisterObject(this);
+			context.unregisterObject(this);
+			context = null;
 		}
 		allocated = false;
 	}
@@ -120,22 +121,10 @@ public abstract class OALObject
 			throw new SoundException("Object " + getClass().getSimpleName() + ": AL returned \"" + AL11.alGetString(error) + "\"");
 	}
 	
-	/**
-	 * Frees this object from OpenAL.
-	 * Safe, since OpenAL is thread-safe.
-	 * AS ALWAYS, NEVER CALL DIRECTLY. 
-	 */
-	@Override
-	public void finalize() throws Throwable
-	{
-		destroy();
-		super.finalize();
-	}
-	
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ' ' + getALId();
+		return getClass().getSimpleName() + ' ' + getName();
 	}
 
 }

@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -42,9 +42,9 @@ public class FlangerEffect extends OALEffect
 	/** Flanger delay in seconds. */
 	protected float delay;
 	
-	public FlangerEffect(OALSystem system)
+	public FlangerEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_FLANGER);
+		super(context, EXTEfx.AL_EFFECT_FLANGER);
 		setWaveForm(WaveForm.TRIANGLE);
 		setPhase(EXTEfx.AL_FLANGER_DEFAULT_PHASE);
 		setRate(EXTEfx.AL_FLANGER_DEFAULT_RATE);
@@ -68,7 +68,7 @@ public class FlangerEffect extends OALEffect
 	public final void setDelay(float delay)
 	{
 		this.delay = delay;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_FLANGER_DELAY, MathUtils.clampValue(delay, EXTEfx.AL_FLANGER_MIN_DELAY, EXTEfx.AL_FLANGER_MAX_DELAY));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_DELAY, MathUtils.clampValue(delay, EXTEfx.AL_FLANGER_MIN_DELAY, EXTEfx.AL_FLANGER_MAX_DELAY));
 		errorCheck();
 	}
 
@@ -87,7 +87,7 @@ public class FlangerEffect extends OALEffect
 	public final void setDepth(float depth)
 	{
 		this.depth = depth;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_FLANGER_DEPTH, MathUtils.clampValue(depth, EXTEfx.AL_FLANGER_MIN_DEPTH, EXTEfx.AL_FLANGER_MAX_DEPTH));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_DEPTH, MathUtils.clampValue(depth, EXTEfx.AL_FLANGER_MIN_DEPTH, EXTEfx.AL_FLANGER_MAX_DEPTH));
 		errorCheck();
 	}
 
@@ -106,7 +106,7 @@ public class FlangerEffect extends OALEffect
 	public final void setFeedback(float feedback)
 	{
 		this.feedback = feedback;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_FLANGER_FEEDBACK, MathUtils.clampValue(feedback, EXTEfx.AL_FLANGER_MIN_FEEDBACK, EXTEfx.AL_FLANGER_MAX_FEEDBACK));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_FEEDBACK, MathUtils.clampValue(feedback, EXTEfx.AL_FLANGER_MIN_FEEDBACK, EXTEfx.AL_FLANGER_MAX_FEEDBACK));
 		errorCheck();
 	}
 
@@ -125,7 +125,7 @@ public class FlangerEffect extends OALEffect
 	public final void setPhase(int phase)
 	{
 		this.phase = phase;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_FLANGER_PHASE, MathUtils.clampValue(phase, EXTEfx.AL_FLANGER_MIN_PHASE, EXTEfx.AL_FLANGER_MAX_PHASE));
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_FLANGER_PHASE, MathUtils.clampValue(phase, EXTEfx.AL_FLANGER_MIN_PHASE, EXTEfx.AL_FLANGER_MAX_PHASE));
 		errorCheck();
 	}
 
@@ -144,7 +144,7 @@ public class FlangerEffect extends OALEffect
 	public final void setRate(float rate)
 	{
 		this.rate = rate;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_FLANGER_RATE, MathUtils.clampValue(rate, EXTEfx.AL_FLANGER_MIN_RATE, EXTEfx.AL_FLANGER_MAX_RATE));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_RATE, MathUtils.clampValue(rate, EXTEfx.AL_FLANGER_MIN_RATE, EXTEfx.AL_FLANGER_MAX_RATE));
 		errorCheck();
 	}
 
@@ -163,7 +163,7 @@ public class FlangerEffect extends OALEffect
 	public final void setWaveForm(WaveForm waveForm)
 	{
 		this.waveForm = waveForm;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_FLANGER_WAVEFORM, waveForm.alVal);
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_FLANGER_WAVEFORM, waveForm.alVal);
 		errorCheck();
 	}
 	

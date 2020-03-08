@@ -76,7 +76,7 @@ public abstract class OALHandle
 	 * @throws SoundException if a problem occurs during free.
 	 * @see #free()
 	 */
-	public final void destroy() throws SoundException 
+	public void destroy() throws SoundException 
 	{
 		if (allocated)
 		{

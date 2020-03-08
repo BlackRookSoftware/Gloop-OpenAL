@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 
 /**
  * Compressor effect for sound sources.
@@ -21,9 +21,9 @@ public class CompressorEffect extends OALEffect
 	/** Compressor state. */
 	protected boolean enabled;
 	
-	public CompressorEffect(OALSystem system)
+	public CompressorEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_COMPRESSOR);
+		super(context, EXTEfx.AL_EFFECT_COMPRESSOR);
 		setEnabled(EXTEfx.AL_COMPRESSOR_DEFAULT_ONOFF != 0);
 	}
 
@@ -42,7 +42,7 @@ public class CompressorEffect extends OALEffect
 	public final void setEnabled(boolean enabled)
 	{
 		this.enabled = enabled;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_COMPRESSOR_ONOFF, enabled ? 1 : 0);
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_COMPRESSOR_ONOFF, enabled ? 1 : 0);
 		errorCheck();
 	}
 	

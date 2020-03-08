@@ -9,7 +9,6 @@ package com.blackrook.gloop.openal;
 
 import java.nio.IntBuffer;
 
-import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
@@ -19,17 +18,17 @@ import org.lwjgl.system.MemoryStack;
  */
 public abstract class OALEffect extends OALObject
 {
-	protected OALEffect(OALSystem system, int alEffectType)
+	protected OALEffect(OALContext context, int alEffectType)
 	{
-		super(system);
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_EFFECT_TYPE, alEffectType);
+		super(context);
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_EFFECT_TYPE, alEffectType);
 	}
 	
 	@Override
 	protected final int allocate()
 	{
 		int out;
-		AL11.alGetError();
+		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
@@ -43,8 +42,8 @@ public abstract class OALEffect extends OALObject
 	@Override
 	protected final void free()
 	{
-		AL11.alGetError();
-		EXTEfx.alDeleteEffects(getALId());
+		clearError();
+		EXTEfx.alDeleteEffects(getName());
 		errorCheck();
 	}
 	

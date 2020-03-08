@@ -19,11 +19,11 @@ public final class OALTest2
 
 		OALSystem system = new OALSystem();
 		
-		OALBuffer[] buffers = system.createBuffers(2);
+		OALBuffer[] buffers = system.getCurrentContext().createBuffers(2);
 		buffers[0].setFrequencyAndFormat(format);
 		buffers[1].setFrequencyAndFormat(format);
 		
-		OALSource source = system.createSource();
+		OALSource source = system.getCurrentContext().createSource();
 		source.reset();
 		source.addSourceListener(new OALSourceListener()
 		{

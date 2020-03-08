@@ -9,7 +9,6 @@ package com.blackrook.gloop.openal;
 
 import java.nio.IntBuffer;
 
-import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
@@ -21,17 +20,17 @@ import com.blackrook.gloop.openal.exception.SoundException;
  */
 public abstract class OALFilter extends OALObject
 {
-	protected OALFilter(OALSystem system, int alFilterType)
+	protected OALFilter(OALContext context, int alFilterType)
 	{
-		super(system);
-		EXTEfx.alFilteri(getALId(), EXTEfx.AL_FILTER_TYPE, alFilterType);
+		super(context);
+		EXTEfx.alFilteri(getName(), EXTEfx.AL_FILTER_TYPE, alFilterType);
 	}
 
 	@Override
 	protected int allocate() throws SoundException
 	{
 		int out;
-		AL11.alGetError();
+		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
@@ -45,8 +44,8 @@ public abstract class OALFilter extends OALObject
 	@Override
 	protected void free() throws SoundException
 	{
-		AL11.alGetError();
-		EXTEfx.alDeleteFilters(getALId());
+		clearError();
+		EXTEfx.alDeleteFilters(getName());
 		errorCheck();
 	}
 

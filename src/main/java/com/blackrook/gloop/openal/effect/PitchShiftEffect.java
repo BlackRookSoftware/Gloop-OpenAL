@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -24,9 +24,9 @@ public class PitchShiftEffect extends OALEffect
 	/** Pitch shifter fine tuning in cents. */
 	protected int fine;
 	
-	public PitchShiftEffect(OALSystem system)
+	public PitchShiftEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_PITCH_SHIFTER);
+		super(context, EXTEfx.AL_EFFECT_PITCH_SHIFTER);
 		setCoarseTuning(EXTEfx.AL_PITCH_SHIFTER_DEFAULT_COARSE_TUNE);
 		setFineTuning(EXTEfx.AL_PITCH_SHIFTER_DEFAULT_FINE_TUNE);
 	}
@@ -46,7 +46,7 @@ public class PitchShiftEffect extends OALEffect
 	public final void setCoarseTuning(int coarse)
 	{
 		this.coarse = coarse;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_PITCH_SHIFTER_COARSE_TUNE, MathUtils.clampValue(coarse, EXTEfx.AL_PITCH_SHIFTER_MIN_COARSE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_COARSE_TUNE));
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_PITCH_SHIFTER_COARSE_TUNE, MathUtils.clampValue(coarse, EXTEfx.AL_PITCH_SHIFTER_MIN_COARSE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_COARSE_TUNE));
 		errorCheck();
 	}
 
@@ -65,7 +65,7 @@ public class PitchShiftEffect extends OALEffect
 	public final void setFineTuning(int fine)
 	{
 		this.fine = fine;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_PITCH_SHIFTER_FINE_TUNE, MathUtils.clampValue(fine, EXTEfx.AL_PITCH_SHIFTER_MIN_FINE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_FINE_TUNE));
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_PITCH_SHIFTER_FINE_TUNE, MathUtils.clampValue(fine, EXTEfx.AL_PITCH_SHIFTER_MIN_FINE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_FINE_TUNE));
 		errorCheck();
 	}
 	

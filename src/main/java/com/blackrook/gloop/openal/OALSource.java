@@ -90,9 +90,9 @@ public final class OALSource extends OALObject
 	 * @param effectSlots the effect slots to create.
 	 * @throws SoundException if an OpenAL source cannot be allocated.
 	 */
-	OALSource(OALSystem system, boolean autovel, int effectSlots)
+	OALSource(OALContext context, boolean autovel, int effectSlots)
 	{
-		super(system);
+		super(context);
 		this.buffer = null;
 		this.bufferQueue = new LinkedList<>();
 		this.sourceListeners = new LinkedList<>();
@@ -112,7 +112,7 @@ public final class OALSource extends OALObject
 	protected final int allocate()
 	{
 		int out;
-		AL11.alGetError();
+		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
@@ -132,8 +132,8 @@ public final class OALSource extends OALObject
 		if (isPlaying()) 
 			stop();
 		setBuffer(null);
-		AL11.alGetError();
-		AL11.alDeleteSources(getALId());
+		clearError();
+		AL11.alDeleteSources(getName());
 		errorCheck();
 	}
 
@@ -197,11 +197,11 @@ public final class OALSource extends OALObject
 	public void setEffectSlot(int slot, OALEffectSlot effectSlot, OALFilter wetFilter)
 	{
 		AL11.alSource3i(
-			getALId(), 
+			getName(), 
 			EXTEfx.AL_AUXILIARY_SEND_FILTER, 
-			effectSlot == null ? EXTEfx.AL_EFFECTSLOT_NULL : effectSlot.getALId(), 
+			effectSlot == null ? EXTEfx.AL_EFFECTSLOT_NULL : effectSlot.getName(), 
 			slot,
-			wetFilter == null ? EXTEfx.AL_FILTER_NULL : wetFilter.getALId()
+			wetFilter == null ? EXTEfx.AL_FILTER_NULL : wetFilter.getName()
 		);
 		errorCheck();
 		auxEffectSlots[slot] = effectSlot;
@@ -215,7 +215,7 @@ public final class OALSource extends OALObject
 	public void setFilter(OALFilter dryFilter)
 	{
 		this.dryFilter = dryFilter;
-		AL11.alSourcei(getALId(), EXTEfx.AL_DIRECT_FILTER, dryFilter == null ? EXTEfx.AL_FILTER_NULL : dryFilter.getALId());
+		AL11.alSourcei(getName(), EXTEfx.AL_DIRECT_FILTER, dryFilter == null ? EXTEfx.AL_FILTER_NULL : dryFilter.getName());
 		errorCheck();
 	}
 	
@@ -233,7 +233,7 @@ public final class OALSource extends OALObject
 		position[0] = x;
 		position[1] = y;
 		position[2] = z;
-		AL11.alSourcefv(getALId(), AL11.AL_POSITION, position);
+		AL11.alSourcefv(getName(), AL11.AL_POSITION, position);
 		errorCheck();
 	}
 
@@ -247,7 +247,7 @@ public final class OALSource extends OALObject
 			setVelocity(f[0]-position[0],f[1]-position[1],f[2]-position[2]);
 
 		System.arraycopy(f, 0, position, 0, Math.min(f.length, 3));
-		AL11.alSourcefv(getALId(), AL11.AL_POSITION, position);
+		AL11.alSourcefv(getName(), AL11.AL_POSITION, position);
 		errorCheck();
 	}
 	
@@ -262,7 +262,7 @@ public final class OALSource extends OALObject
 		velocity[0] = x;
 		velocity[1] = y;
 		velocity[2] = z;
-		AL11.alSourcefv(getALId(), AL11.AL_VELOCITY, velocity);
+		AL11.alSourcefv(getName(), AL11.AL_VELOCITY, velocity);
 		errorCheck();
 	}
 
@@ -273,7 +273,7 @@ public final class OALSource extends OALObject
 	public void setVelocity(float[] f)
 	{
 		System.arraycopy(f,0,velocity,0,Math.min(f.length,3));
-		AL11.alSourcefv(getALId(), AL11.AL_VELOCITY, velocity);
+		AL11.alSourcefv(getName(), AL11.AL_VELOCITY, velocity);
 		errorCheck();
 	}
 		
@@ -288,7 +288,7 @@ public final class OALSource extends OALObject
 		direction[0] = x;
 		direction[1] = y;
 		direction[2] = z;
-		AL11.alSourcefv(getALId(), AL11.AL_DIRECTION, direction);
+		AL11.alSourcefv(getName(), AL11.AL_DIRECTION, direction);
 		errorCheck();
 	}
 
@@ -299,7 +299,7 @@ public final class OALSource extends OALObject
 	public void setDirection(float[] f)
 	{
 		System.arraycopy(f, 0, direction, 0, Math.min(f.length, 3));
-		AL11.alSourcefv(getALId(), AL11.AL_DIRECTION, direction);
+		AL11.alSourcefv(getName(), AL11.AL_DIRECTION, direction);
 		errorCheck();
 	}
 	
@@ -310,7 +310,7 @@ public final class OALSource extends OALObject
 	public void setGain(float f)
 	{
 		gain = MathUtils.clampValue(f, 0f, 1f);
-		AL11.alSourcef(getALId(), AL11.AL_GAIN, gain);
+		AL11.alSourcef(getName(), AL11.AL_GAIN, gain);
 		errorCheck();
 	}
 
@@ -322,7 +322,7 @@ public final class OALSource extends OALObject
 	public void setMinGain(float f)
 	{
 		minGain = MathUtils.clampValue(f, 0f, 1f);
-		AL11.alSourcef(getALId(), AL11.AL_MIN_GAIN, minGain);
+		AL11.alSourcef(getName(), AL11.AL_MIN_GAIN, minGain);
 		errorCheck();
 	}
 
@@ -334,7 +334,7 @@ public final class OALSource extends OALObject
 	public void setMaxGain(float f)
 	{
 		maxGain = MathUtils.clampValue(f, 0f, 1f);
-		AL11.alSourcef(getALId(), AL11.AL_MAX_GAIN, maxGain);
+		AL11.alSourcef(getName(), AL11.AL_MAX_GAIN, maxGain);
 		errorCheck();
 	}
 
@@ -345,7 +345,7 @@ public final class OALSource extends OALObject
 	public void setPitch(float f)
 	{
 		pitch = Math.max(0, f);
-		AL11.alSourcef(getALId(), AL11.AL_PITCH, pitch);
+		AL11.alSourcef(getName(), AL11.AL_PITCH, pitch);
 		errorCheck();
 	}
 
@@ -378,7 +378,7 @@ public final class OALSource extends OALObject
 	public void setRolloff(float f)
 	{
 		rolloff = Math.max(0, f);
-		AL11.alSourcef(getALId(), AL11.AL_ROLLOFF_FACTOR, rolloff);
+		AL11.alSourcef(getName(), AL11.AL_ROLLOFF_FACTOR, rolloff);
 		errorCheck();
 	}
 
@@ -390,7 +390,7 @@ public final class OALSource extends OALObject
 	public void setOuterConeGain(float f)
 	{
 		outerConeGain = f;
-		AL11.alSourcef(getALId(), AL11.AL_CONE_OUTER_GAIN, outerConeGain);
+		AL11.alSourcef(getName(), AL11.AL_CONE_OUTER_GAIN, outerConeGain);
 		errorCheck();
 	}
 
@@ -403,7 +403,7 @@ public final class OALSource extends OALObject
 	public void setOuterConeAngle(float f)
 	{
 		outerCone = f;
-		AL11.alSourcef(getALId(), AL11.AL_CONE_OUTER_ANGLE, outerCone);
+		AL11.alSourcef(getName(), AL11.AL_CONE_OUTER_ANGLE, outerCone);
 		errorCheck();
 	}
 
@@ -416,7 +416,7 @@ public final class OALSource extends OALObject
 	public void setInnerConeAngle(float f)
 	{
 		innerCone = f;
-		AL11.alSourcef(getALId(), AL11.AL_CONE_INNER_ANGLE, innerCone);
+		AL11.alSourcef(getName(), AL11.AL_CONE_INNER_ANGLE, innerCone);
 		errorCheck();
 	}
 
@@ -429,7 +429,7 @@ public final class OALSource extends OALObject
 	public void setMaxDistance(float f)
 	{
 		maxDistance = Math.max(0, f);
-		AL11.alSourcef(getALId(), AL11.AL_MAX_DISTANCE, maxDistance);
+		AL11.alSourcef(getName(), AL11.AL_MAX_DISTANCE, maxDistance);
 		errorCheck();
 	}
 
@@ -442,7 +442,7 @@ public final class OALSource extends OALObject
 	public void setReferenceDistance(float f)
 	{
 		referenceDistance = Math.max(0, f);
-		AL11.alSourcef(getALId(),	AL11.AL_REFERENCE_DISTANCE, referenceDistance);
+		AL11.alSourcef(getName(),	AL11.AL_REFERENCE_DISTANCE, referenceDistance);
 		errorCheck();
 	}
 
@@ -454,7 +454,7 @@ public final class OALSource extends OALObject
 	public void setLooping(boolean loop)
 	{
 		looping = loop;
-		AL11.alSourcei(getALId(), AL11.AL_LOOPING, looping ? AL11.AL_TRUE : AL11.AL_FALSE);
+		AL11.alSourcei(getName(), AL11.AL_LOOPING, looping ? AL11.AL_TRUE : AL11.AL_FALSE);
 		errorCheck();
 	}
 	
@@ -465,7 +465,7 @@ public final class OALSource extends OALObject
 	public void setRelative(boolean rel)
 	{
 		relative = rel;
-		AL11.alSourcei(getALId(), AL11.AL_SOURCE_RELATIVE, relative ? AL11.AL_TRUE : AL11.AL_FALSE);
+		AL11.alSourcei(getName(), AL11.AL_SOURCE_RELATIVE, relative ? AL11.AL_TRUE : AL11.AL_FALSE);
 		errorCheck();
 	}
 
@@ -582,13 +582,13 @@ public final class OALSource extends OALObject
 		bufferQueue.clear();
 		if (b == null)
 		{
-			AL11.alSourcei(getALId(), AL11.AL_BUFFER, AL11.AL_NONE);
+			AL11.alSourcei(getName(), AL11.AL_BUFFER, AL11.AL_NONE);
 			errorCheck();
 			buffer = null;
 		}
 		else
 		{
-			AL11.alSourcei(getALId(), AL11.AL_BUFFER, b.getALId());
+			AL11.alSourcei(getName(), AL11.AL_BUFFER, b.getName());
 			errorCheck();
 			buffer = b;
 		}
@@ -605,10 +605,10 @@ public final class OALSource extends OALObject
 			return null;
 		
 		clearError();
-		int bid = AL11.alSourceUnqueueBuffers(getALId());
+		int bid = AL11.alSourceUnqueueBuffers(getName());
 		errorCheck();
 		OALBuffer out = bufferQueue.pollFirst();
-		if (bid != out.getALId())
+		if (bid != out.getName())
 			throw new SoundException("INTERNAL ERROR: Buffer dequeue mismatch!");
 		fireSourceBufferDequeuedEvent(this, out);
 		return out;
@@ -636,7 +636,7 @@ public final class OALSource extends OALObject
 		if (b != null)
 		{
 			clearError();
-			AL11.alSourceQueueBuffers(getALId(), b.getALId());
+			AL11.alSourceQueueBuffers(getName(), b.getName());
 			errorCheck();
 			bufferQueue.add(b);
 			fireSourceBufferEnqueuedEvent(this, b);
@@ -659,7 +659,7 @@ public final class OALSource extends OALObject
 	 */
 	public int getProcessedBufferCount()
 	{
-		int out = AL11.alGetSourcei(getALId(), AL11.AL_BUFFERS_PROCESSED);
+		int out = AL11.alGetSourcei(getName(), AL11.AL_BUFFERS_PROCESSED);
 		errorCheck();
 		return out;
 	}
@@ -763,7 +763,7 @@ public final class OALSource extends OALObject
 	{
 		if (isBoundToABuffer())
 		{
-			AL11.alSourcePlay(getALId());
+			AL11.alSourcePlay(getName());
 			errorCheck();
 			fireSourcePlayedEvent(this);
 		}
@@ -789,7 +789,7 @@ public final class OALSource extends OALObject
 	{
 		if (isBoundToABuffer())
 		{
-			AL11.alSourcePause(getALId());
+			AL11.alSourcePause(getName());
 			errorCheck();
 			fireSourcePausedEvent(this);
 		}
@@ -803,7 +803,7 @@ public final class OALSource extends OALObject
 		if (isBoundToABuffer())
 		{
 			boolean event = !isStopped();
-			AL11.alSourceStop(getALId());
+			AL11.alSourceStop(getName());
 			errorCheck();
 			if (event)
 				fireSourceStoppedEvent(this);
@@ -815,7 +815,7 @@ public final class OALSource extends OALObject
 	{
 		if (isBoundToABuffer())
 		{
-			AL11.alSourceRewind(getALId());
+			AL11.alSourceRewind(getName());
 			errorCheck();
 			fireSourceRewoundEvent(this);
 		}
@@ -874,7 +874,7 @@ public final class OALSource extends OALObject
 	protected final int getState()
 	{
 		clearError();
-		int out = AL11.alGetSourcei(getALId(), AL11.AL_SOURCE_STATE);
+		int out = AL11.alGetSourcei(getName(), AL11.AL_SOURCE_STATE);
 		errorCheck();
 		return out;
 	}
@@ -893,7 +893,7 @@ public final class OALSource extends OALObject
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Source ");
-		sb.append(getALId()+" ");
+		sb.append(getName()+" ");
 		if (bufferQueue.size() > 0)
 			sb.append(bufferQueue.toString());
 		else if (buffer != null)

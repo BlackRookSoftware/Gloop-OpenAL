@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -40,9 +40,9 @@ public class EqualizerEffect extends OALEffect
 	/** Equalizer high cutoff in Hertz. */
 	protected float highCutoff;
 	
-	public EqualizerEffect(OALSystem system)
+	public EqualizerEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_EQUALIZER);
+		super(context, EXTEfx.AL_EFFECT_EQUALIZER);
 		setLowGain(EXTEfx.AL_EQUALIZER_DEFAULT_LOW_GAIN);
 		setLowCutoff(EXTEfx.AL_EQUALIZER_DEFAULT_LOW_CUTOFF);
 		
@@ -73,7 +73,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setHighCutoff(float highCutoff) 
 	{
 		this.highCutoff = highCutoff;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_HIGH_CUTOFF, MathUtils.clampValue(highCutoff, EXTEfx.AL_EQUALIZER_MIN_HIGH_CUTOFF, EXTEfx.AL_EQUALIZER_MAX_HIGH_CUTOFF));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_HIGH_CUTOFF, MathUtils.clampValue(highCutoff, EXTEfx.AL_EQUALIZER_MIN_HIGH_CUTOFF, EXTEfx.AL_EQUALIZER_MAX_HIGH_CUTOFF));
 		errorCheck();
 	}
 
@@ -92,7 +92,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setHighGain(float highGain)
 	{
 		this.highGain = highGain;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_HIGH_GAIN, MathUtils.clampValue(highGain, EXTEfx.AL_EQUALIZER_MIN_HIGH_GAIN, EXTEfx.AL_EQUALIZER_MAX_HIGH_GAIN));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_HIGH_GAIN, MathUtils.clampValue(highGain, EXTEfx.AL_EQUALIZER_MIN_HIGH_GAIN, EXTEfx.AL_EQUALIZER_MAX_HIGH_GAIN));
 		errorCheck();
 	}
 
@@ -111,7 +111,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setLowCutoff(float lowCutoff) 
 	{
 		this.lowCutoff = lowCutoff;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_LOW_CUTOFF, MathUtils.clampValue(lowCutoff, EXTEfx.AL_EQUALIZER_MIN_LOW_CUTOFF, EXTEfx.AL_EQUALIZER_MAX_LOW_CUTOFF));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_LOW_CUTOFF, MathUtils.clampValue(lowCutoff, EXTEfx.AL_EQUALIZER_MIN_LOW_CUTOFF, EXTEfx.AL_EQUALIZER_MAX_LOW_CUTOFF));
 		errorCheck();
 	}
 
@@ -130,7 +130,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setLowGain(float lowGain) 
 	{
 		this.lowGain = lowGain;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_LOW_GAIN, MathUtils.clampValue(lowGain, EXTEfx.AL_EQUALIZER_MIN_LOW_GAIN, EXTEfx.AL_EQUALIZER_MAX_LOW_GAIN));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_LOW_GAIN, MathUtils.clampValue(lowGain, EXTEfx.AL_EQUALIZER_MIN_LOW_GAIN, EXTEfx.AL_EQUALIZER_MAX_LOW_GAIN));
 		errorCheck();
 	}
 
@@ -149,7 +149,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setMid1Center(float mid1Center) 
 	{
 		this.mid1Center = mid1Center;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_MID1_CENTER, MathUtils.clampValue(mid1Center, EXTEfx.AL_EQUALIZER_MIN_MID1_CENTER, EXTEfx.AL_EQUALIZER_MAX_MID1_CENTER));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_MID1_CENTER, MathUtils.clampValue(mid1Center, EXTEfx.AL_EQUALIZER_MIN_MID1_CENTER, EXTEfx.AL_EQUALIZER_MAX_MID1_CENTER));
 		errorCheck();
 	}
 
@@ -168,7 +168,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setMid1Gain(float mid1Gain) 
 	{
 		this.mid1Gain = mid1Gain;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_MID1_GAIN, MathUtils.clampValue(mid1Gain, EXTEfx.AL_EQUALIZER_MIN_MID1_GAIN, EXTEfx.AL_EQUALIZER_MAX_MID1_GAIN));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_MID1_GAIN, MathUtils.clampValue(mid1Gain, EXTEfx.AL_EQUALIZER_MIN_MID1_GAIN, EXTEfx.AL_EQUALIZER_MAX_MID1_GAIN));
 		errorCheck();
 	}
 
@@ -187,7 +187,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setMid1Width(float mid1Width) 
 	{
 		this.mid1Width = mid1Width;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_MID1_WIDTH, MathUtils.clampValue(mid1Width, EXTEfx.AL_EQUALIZER_MIN_MID1_WIDTH, EXTEfx.AL_EQUALIZER_MAX_MID1_WIDTH));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_MID1_WIDTH, MathUtils.clampValue(mid1Width, EXTEfx.AL_EQUALIZER_MIN_MID1_WIDTH, EXTEfx.AL_EQUALIZER_MAX_MID1_WIDTH));
 		errorCheck();
 	}
 
@@ -206,7 +206,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setMid2Center(float mid2Center) 
 	{
 		this.mid2Center = mid2Center;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_MID2_CENTER, MathUtils.clampValue(mid2Center, EXTEfx.AL_EQUALIZER_MIN_MID2_CENTER, EXTEfx.AL_EQUALIZER_MAX_MID2_CENTER));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_MID2_CENTER, MathUtils.clampValue(mid2Center, EXTEfx.AL_EQUALIZER_MIN_MID2_CENTER, EXTEfx.AL_EQUALIZER_MAX_MID2_CENTER));
 		errorCheck();
 	}
 
@@ -225,7 +225,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setMid2Gain(float mid2Gain) 
 	{
 		this.mid2Gain = mid2Gain;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_MID2_GAIN, MathUtils.clampValue(mid2Gain, EXTEfx.AL_EQUALIZER_MIN_MID2_GAIN, EXTEfx.AL_EQUALIZER_MAX_MID2_GAIN));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_MID2_GAIN, MathUtils.clampValue(mid2Gain, EXTEfx.AL_EQUALIZER_MIN_MID2_GAIN, EXTEfx.AL_EQUALIZER_MAX_MID2_GAIN));
 		errorCheck();
 	}
 
@@ -244,7 +244,7 @@ public class EqualizerEffect extends OALEffect
 	public final void setMid2Width(float mid2Width) 
 	{
 		this.mid2Width = mid2Width;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_EQUALIZER_MID2_WIDTH, MathUtils.clampValue(mid2Width, EXTEfx.AL_EQUALIZER_MIN_MID2_WIDTH, EXTEfx.AL_EQUALIZER_MAX_MID2_WIDTH));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_EQUALIZER_MID2_WIDTH, MathUtils.clampValue(mid2Width, EXTEfx.AL_EQUALIZER_MIN_MID2_WIDTH, EXTEfx.AL_EQUALIZER_MAX_MID2_WIDTH));
 		errorCheck();
 	}
 	

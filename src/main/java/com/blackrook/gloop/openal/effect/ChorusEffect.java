@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -42,9 +42,9 @@ public class ChorusEffect extends OALEffect
 	/** Chorus delay in seconds. */
 	protected float delay;
 	
-	public ChorusEffect(OALSystem system)
+	public ChorusEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_CHORUS);
+		super(context, EXTEfx.AL_EFFECT_CHORUS);
 		setWaveForm(WaveForm.TRIANGLE);
 		setPhase(EXTEfx.AL_CHORUS_DEFAULT_PHASE);
 		setRate(EXTEfx.AL_CHORUS_DEFAULT_RATE);
@@ -68,7 +68,7 @@ public class ChorusEffect extends OALEffect
 	public final void setDelay(float delay)
 	{
 		this.delay = delay;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_CHORUS_DELAY, MathUtils.clampValue(delay, EXTEfx.AL_CHORUS_MIN_DELAY, EXTEfx.AL_CHORUS_MAX_DELAY));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_CHORUS_DELAY, MathUtils.clampValue(delay, EXTEfx.AL_CHORUS_MIN_DELAY, EXTEfx.AL_CHORUS_MAX_DELAY));
 		errorCheck();
 	}
 
@@ -87,7 +87,7 @@ public class ChorusEffect extends OALEffect
 	public final void setDepth(float depth)
 	{
 		this.depth = depth;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_CHORUS_DEPTH, MathUtils.clampValue(depth, EXTEfx.AL_CHORUS_MIN_DEPTH, EXTEfx.AL_CHORUS_MAX_DEPTH));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_CHORUS_DEPTH, MathUtils.clampValue(depth, EXTEfx.AL_CHORUS_MIN_DEPTH, EXTEfx.AL_CHORUS_MAX_DEPTH));
 		errorCheck();
 	}
 
@@ -106,7 +106,7 @@ public class ChorusEffect extends OALEffect
 	public final void setFeedback(float feedback)
 	{
 		this.feedback = feedback;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_CHORUS_FEEDBACK, MathUtils.clampValue(feedback, EXTEfx.AL_CHORUS_MIN_FEEDBACK, EXTEfx.AL_CHORUS_MAX_FEEDBACK));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_CHORUS_FEEDBACK, MathUtils.clampValue(feedback, EXTEfx.AL_CHORUS_MIN_FEEDBACK, EXTEfx.AL_CHORUS_MAX_FEEDBACK));
 		errorCheck();
 	}
 
@@ -125,7 +125,7 @@ public class ChorusEffect extends OALEffect
 	public final void setPhase(int phase)
 	{
 		this.phase = phase;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_CHORUS_PHASE, MathUtils.clampValue(phase, EXTEfx.AL_CHORUS_MIN_PHASE, EXTEfx.AL_CHORUS_MAX_PHASE));
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_CHORUS_PHASE, MathUtils.clampValue(phase, EXTEfx.AL_CHORUS_MIN_PHASE, EXTEfx.AL_CHORUS_MAX_PHASE));
 		errorCheck();
 	}
 
@@ -144,7 +144,7 @@ public class ChorusEffect extends OALEffect
 	public final void setRate(float rate)
 	{
 		this.rate = rate;
-		EXTEfx.alEffectf(getALId(), EXTEfx.AL_CHORUS_RATE, MathUtils.clampValue(rate, EXTEfx.AL_CHORUS_MIN_RATE, EXTEfx.AL_CHORUS_MAX_RATE));
+		EXTEfx.alEffectf(getName(), EXTEfx.AL_CHORUS_RATE, MathUtils.clampValue(rate, EXTEfx.AL_CHORUS_MIN_RATE, EXTEfx.AL_CHORUS_MAX_RATE));
 		errorCheck();
 	}
 
@@ -163,7 +163,7 @@ public class ChorusEffect extends OALEffect
 	public final void setWaveForm(WaveForm waveForm)
 	{
 		this.waveForm = waveForm;
-		EXTEfx.alEffecti(getALId(), EXTEfx.AL_CHORUS_WAVEFORM, waveForm.alVal);
+		EXTEfx.alEffecti(getName(), EXTEfx.AL_CHORUS_WAVEFORM, waveForm.alVal);
 		errorCheck();
 	}
 }

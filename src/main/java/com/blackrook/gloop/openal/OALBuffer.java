@@ -70,14 +70,9 @@ public final class OALBuffer extends OALObject
 	/** Sound sampling rate. */
 	protected int bufferRate;
 
-	/**
-	 * Constructs a new sound buffer.
-	 * @throws SoundException if an OpenAL buffer cannot be allocated.
-	 * @throws IOException if the SoundFile can't be opened.
-	 */
-	OALBuffer(OALSystem system)
+	OALBuffer(OALContext context)
 	{
-		super(system);
+		super(context);
 		this.bufferSize = 0;
 		this.bufferFormat = Format.MONO8;
 		this.bufferRate = SAMPLING_RATE_11KHZ;
@@ -88,9 +83,9 @@ public final class OALBuffer extends OALObject
 	 * @param handle the data to use.
 	 * @throws IOException if a handle Decoder cannot be opened. 
 	 */
-	OALBuffer(OALSystem system, JSPISoundHandle handle) throws IOException
+	OALBuffer(OALContext context, JSPISoundHandle handle) throws IOException
 	{
-		this(system);
+		this(context);
 		Decoder decoder = handle.getDecoder();
 		loadFromDecoder(decoder);
 		IOUtils.close(decoder);
@@ -101,9 +96,9 @@ public final class OALBuffer extends OALObject
 	 * buffer filled with a decoder's contents.
 	 * @param decoder the decoder to use.
 	 */
-	OALBuffer(OALSystem system, JSPISoundHandle.Decoder decoder) throws IOException
+	OALBuffer(OALContext context, JSPISoundHandle.Decoder decoder) throws IOException
 	{
-		super(system);
+		super(context);
 		loadFromDecoder(decoder);
 	}
 
@@ -146,7 +141,7 @@ public final class OALBuffer extends OALObject
 	@Override
 	protected final void free()
 	{
-		AL11.alDeleteBuffers(getALId());
+		AL11.alDeleteBuffers(getName());
 		errorCheck();
 	}
 
@@ -199,7 +194,7 @@ public final class OALBuffer extends OALObject
 			throw new SoundException("Input data is not aligned to sample size - len: " + len + " width: " + width);
 
 		clearError();
-		AL11.alBufferData(getALId(), bufferFormat.alVal, data, bufferRate);
+		AL11.alBufferData(getName(), bufferFormat.alVal, data, bufferRate);
 		errorCheck();
 		bufferSize = len;
 	}
@@ -289,7 +284,7 @@ public final class OALBuffer extends OALObject
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Buffer ");
-		sb.append(getALId()+" ");
+		sb.append(getName()+" ");
 		switch (getFormat())
 		{
 			case MONO8:

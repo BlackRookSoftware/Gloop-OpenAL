@@ -17,6 +17,8 @@ import com.blackrook.gloop.openal.exception.SoundException;
  */
 public class OALListener
 {
+	/** This object's owning context. */
+	private OALContext context;
 	/** Listener's position. */
 	protected float[] position;
 	/** Listener's velocity vector. */
@@ -32,8 +34,9 @@ public class OALListener
 	 * Gain is 1.0.
 	 * There should only be one of these in a sound system.
 	 */
-	OALListener()
+	OALListener(OALContext context)
 	{
+		this.context = context;
 		this.position = new float[3];
 		this.velocity = new float[3];
 		this.orientation = new float[6];
@@ -59,9 +62,9 @@ public class OALListener
 	
 	/**
 	 * Sets the Listener's position attributes.
-	 * @param x			the x value.
-	 * @param y			the y value.
-	 * @param z			the z value.
+	 * @param x the x-axis component value.
+	 * @param y	the y-axis component value.
+	 * @param z	the z-axis component value.
 	 */
 	public void setPosition(float x, float y, float z)
 	{
@@ -74,9 +77,9 @@ public class OALListener
 
 	/**
 	 * Sets the Listener's velocity attributes.
-	 * @param x			the x value.
-	 * @param y			the y value.
-	 * @param z			the z value.
+	 * @param x the x-axis component value.
+	 * @param y	the y-axis component value.
+	 * @param z	the z-axis component value.
 	 */
 	public void setVelocity(float x, float y, float z)
 	{
@@ -89,9 +92,9 @@ public class OALListener
 
 	/**
 	 * Sets the Listener's facing attributes.
-	 * @param x the x value.
-	 * @param y	the y value.
-	 * @param z the z value.
+	 * @param x the x-axis component value.
+	 * @param y	the y-axis component value.
+	 * @param z	the z-axis component value.
 	 */
 	public void setFacing(float x, float y, float z)
 	{
@@ -104,9 +107,9 @@ public class OALListener
 
 	/**
 	 * Sets the Listener's top-orientation.
-	 * @param x the x value.
-	 * @param y	the y value.
-	 * @param z the z value.
+	 * @param x the x-axis component value.
+	 * @param y	the y-axis component value.
+	 * @param z	the z-axis component value.
 	 */
 	public void setTop(float x, float y, float z)
 	{

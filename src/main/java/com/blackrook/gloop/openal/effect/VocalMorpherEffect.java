@@ -9,8 +9,8 @@ package com.blackrook.gloop.openal.effect;
 
 import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
-import com.blackrook.gloop.openal.OALSystem;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -81,9 +81,9 @@ public class VocalMorpherEffect extends OALEffect
 	/** Morpher waveform. */
 	protected WaveForm waveForm;
 
-	public VocalMorpherEffect(OALSystem system)
+	public VocalMorpherEffect(OALContext context)
 	{
-		super(system, EXTEfx.AL_EFFECT_VOCAL_MORPHER);
+		super(context, EXTEfx.AL_EFFECT_VOCAL_MORPHER);
 		setPhonemeA(Phoneme.A);
 		setPhonemeB(Phoneme.ER);
 		setPhonemeACoarseTuning(EXTEfx.AL_VOCAL_MORPHER_DEFAULT_PHONEMEA_COARSE_TUNING);
@@ -108,7 +108,7 @@ public class VocalMorpherEffect extends OALEffect
 	{
 		this.phonemeA = phonemeA;
 		// AL_VOCAL_MORPHER_PHONEMEA was not in LWJGL.
-		EXTEfx.alEffecti(getALId(), 1 /* AL_VOCAL_MORPHER_PHONEMEA */, phonemeA.alVal);
+		EXTEfx.alEffecti(getName(), 1 /* AL_VOCAL_MORPHER_PHONEMEA */, phonemeA.alVal);
 		errorCheck();
 	}
 
@@ -128,7 +128,7 @@ public class VocalMorpherEffect extends OALEffect
 	{
 		this.phonemeACoarseTuning = phonemeACoarseTuning;
 		// AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING was not in LWJGL.
-		EXTEfx.alEffecti(getALId(), 2 /* AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING */, MathUtils.clampValue(phonemeACoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEA_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEA_COARSE_TUNING));
+		EXTEfx.alEffecti(getName(), 2 /* AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING */, MathUtils.clampValue(phonemeACoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEA_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEA_COARSE_TUNING));
 		errorCheck();
 	}
 
@@ -148,7 +148,7 @@ public class VocalMorpherEffect extends OALEffect
 	{
 		this.phonemeB = phonemeB;
 		// AL_VOCAL_MORPHER_PHONEMEB was not in LWJGL.
-		EXTEfx.alEffecti(getALId(), 3 /* AL_VOCAL_MORPHER_PHONEMEB */, phonemeB.alVal);
+		EXTEfx.alEffecti(getName(), 3 /* AL_VOCAL_MORPHER_PHONEMEB */, phonemeB.alVal);
 		errorCheck();
 	}
 
@@ -168,7 +168,7 @@ public class VocalMorpherEffect extends OALEffect
 	{
 		this.phonemeBCoarseTuning = phonemeBCoarseTuning;
 		// AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING was not in LWJGL.
-		EXTEfx.alEffecti(getALId(), 4 /* AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING */, MathUtils.clampValue(phonemeBCoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEB_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEB_COARSE_TUNING));
+		EXTEfx.alEffecti(getName(), 4 /* AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING */, MathUtils.clampValue(phonemeBCoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEB_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEB_COARSE_TUNING));
 		errorCheck();
 	}
 
@@ -188,7 +188,7 @@ public class VocalMorpherEffect extends OALEffect
 	{
 		this.rate = rate;
 		// AL_VOCAL_MORPHER_RATE was not in LWJGL.
-		EXTEfx.alEffectf(getALId(), 6 /* AL_VOCAL_MORPHER_RATE */, MathUtils.clampValue(rate, EXTEfx.AL_VOCAL_MORPHER_MIN_RATE, EXTEfx.AL_VOCAL_MORPHER_MAX_RATE));
+		EXTEfx.alEffectf(getName(), 6 /* AL_VOCAL_MORPHER_RATE */, MathUtils.clampValue(rate, EXTEfx.AL_VOCAL_MORPHER_MIN_RATE, EXTEfx.AL_VOCAL_MORPHER_MAX_RATE));
 		errorCheck();
 	}
 
@@ -208,7 +208,7 @@ public class VocalMorpherEffect extends OALEffect
 	{
 		this.waveForm = waveform;
 		// AL_VOCAL_MORPHER_WAVEFORM was not in LWJGL.
-		EXTEfx.alEffecti(getALId(), 5 /* AL_VOCAL_MORPHER_WAVEFORM */, waveform.alVal);
+		EXTEfx.alEffecti(getName(), 5 /* AL_VOCAL_MORPHER_WAVEFORM */, waveform.alVal);
 		errorCheck();
 	}
 	
