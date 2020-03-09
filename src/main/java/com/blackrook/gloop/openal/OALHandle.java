@@ -7,8 +7,6 @@
  ******************************************************************************/
 package com.blackrook.gloop.openal;
 
-import org.lwjgl.openal.AL11;
-
 import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
@@ -39,25 +37,6 @@ public abstract class OALHandle
 	 */
 	public abstract void destroy() throws SoundException;
 
-	/**
-	 * Convenience method for clearing the OpenAL error state.
-	 */
-	protected void clearError()
-	{
-		while (AL11.alGetError() != AL11.AL_NO_ERROR) ;
-	}
-
-	/**
-	 * Convenience method for checking for an OpenAL error and throwing a SoundException
-	 * if an error is raised. 
-	 */
-	protected final void errorCheck()
-	{
-		int error = AL11.alGetError();
-		if (error != AL11.AL_NO_ERROR)
-			throw new SoundException("Object " + getClass().getSimpleName() + ": AL returned \"" + AL11.alGetString(error) + "\"");
-	}
-	
 	@Override
 	public int hashCode() 
 	{

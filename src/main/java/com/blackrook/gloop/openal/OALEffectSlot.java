@@ -17,6 +17,7 @@ import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
  * Auxiliary Effect Slot for enforcing effect mixing rules.
+ * TODO: Context locking.
  * @author Matthew Tropiano
  */
 public class OALEffectSlot extends OALObject

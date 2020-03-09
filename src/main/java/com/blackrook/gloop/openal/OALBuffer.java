@@ -24,10 +24,13 @@ import com.blackrook.gloop.openal.struct.IOUtils;
 
 /**
  * Sound sample buffer class.
+ * TODO: Context locking.
  * @author Matthew Tropiano
  */
 public final class OALBuffer extends OALObject
 {
+	private static final ThreadLocal<byte[]> BYTEBUFFER = ThreadLocal.withInitial(()->new byte[16384]);
+	
 	public static final int SAMPLING_RATE_8KHZ =  8000;
 	public static final int SAMPLING_RATE_11KHZ = 11025;
 	public static final int SAMPLING_RATE_16KHZ = 16000;
@@ -106,7 +109,7 @@ public final class OALBuffer extends OALObject
 	{
 		setFrequencyAndFormat(decoder.getDecodedAudioFormat());
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		byte[] by = new byte[16384]; // TODO: Maybe move to ThreadLocal?
+		byte[] by = BYTEBUFFER.get();
 		int amt;
 		while ((amt = decoder.readPCMData(by, 0)) >= 0)
 			bos.write(by, 0, amt);

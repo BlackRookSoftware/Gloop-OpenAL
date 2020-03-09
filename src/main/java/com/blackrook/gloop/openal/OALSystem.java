@@ -73,7 +73,10 @@ public final class OALSystem
 		if (currentContext == context)
 			return contextLock;
 		else if (ALC11.alcMakeContextCurrent(context != null ? context.getHandle() : 0L))
+		{
+			currentContext = context;
 			return contextLock;
+		}
 		else
 			throw new SoundException("Could not acquire context lock.");
 	}

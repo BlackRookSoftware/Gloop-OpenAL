@@ -16,6 +16,7 @@ import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
  * Filter object for OpenAL sources.
+ * TODO: Context locking (plus all filters).
  * @author Matthew Tropiano
  */
 public abstract class OALFilter extends OALObject

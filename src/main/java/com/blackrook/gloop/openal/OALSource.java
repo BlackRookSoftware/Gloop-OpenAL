@@ -22,6 +22,7 @@ import com.blackrook.gloop.openal.struct.ThreadUtils;
 
 /**
  * Encapsulating class for OpenAL sources.
+ * TODO: Context locking.
  * @author Matthew Tropiano
  */
 public final class OALSource extends OALObject

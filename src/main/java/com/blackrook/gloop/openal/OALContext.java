@@ -435,7 +435,7 @@ public class OALContext extends OALHandle
 	{
 		int error = AL11.alGetError();
 		if (error != AL11.AL_NO_ERROR)
-			throw new SoundException("OpenAL returned \""+AL11.alGetString(error)+"\".");
+			throw new SoundException("OpenAL returned \"" + AL11.alGetString(error) + "\".");
 	}
 
 	/**
@@ -691,8 +691,10 @@ public class OALContext extends OALHandle
 	 */
 	public void setDopplerFactor(float f)
 	{
-		AL11.alDopplerFactor(f);
-		getError();
+		try (ContextLock lock = setCurrentContext()) {
+			AL11.alDopplerFactor(f);
+			getError();
+		}
 	}
 
 	/**
@@ -700,7 +702,11 @@ public class OALContext extends OALHandle
 	 */
 	public float getDopplerFactor()
 	{
-		return AL11.alGetFloat(AL11.AL_DOPPLER_FACTOR);
+		float out;
+		try (ContextLock lock = setCurrentContext()) {
+			out = AL11.alGetFloat(AL11.AL_DOPPLER_FACTOR);
+		}
+		return out;
 	}
 
 	/**
@@ -709,8 +715,10 @@ public class OALContext extends OALHandle
 	 */
 	public void setSpeedOfSound(float s)
 	{
-		AL11.alDopplerVelocity(s);
-		getError();
+		try (ContextLock lock = setCurrentContext()) {
+			AL11.alDopplerVelocity(s);
+			getError();
+		}
 	}
 
 	/**
@@ -718,8 +726,12 @@ public class OALContext extends OALHandle
 	 */
 	public float getSpeedOfSound()
 	{
-		// AL_DOPPLER_VELOCITY - for some reason, not defined in AL11
-		return AL11.alGetFloat(0xC001);
+		float out;
+		try (ContextLock lock = setCurrentContext()) {
+			// AL_DOPPLER_VELOCITY - for some reason, not defined in AL11
+			out = AL11.alGetFloat(0xC001);
+		}
+		return out;
 	}
 
 	/**
@@ -729,8 +741,10 @@ public class OALContext extends OALHandle
 	 */
 	public void setDistanceModel(DistanceModel model)
 	{
-		AL11.alDistanceModel(model.alVal);
-		getError();
+		try (ContextLock lock = setCurrentContext()) {
+			AL11.alDistanceModel(model.alVal);
+			getError();
+		}
 		currentDistanceModel = model;
 	}
 
