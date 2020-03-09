@@ -16,7 +16,9 @@ import java.util.TreeSet;
 
 import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC11;
+import org.lwjgl.openal.ALCapabilities;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.effect.AutowahEffect;
 import com.blackrook.gloop.openal.effect.ChorusEffect;
 import com.blackrook.gloop.openal.effect.CompressorEffect;
@@ -110,6 +112,11 @@ public class OALContext extends OALHandle
 	/** The attribute values used to create this context. */
 	private Map<ContextAttribute, Integer> attributeMap;
 	
+	/** This object's handle. */
+	private long handle;
+	/** Was this object allocated? */
+	private boolean allocated;
+
 	/** Map of created sources. */
 	private Map<Integer, OALSource> nameToSource;
 	/** Map of created buffers. */
@@ -129,6 +136,8 @@ public class OALContext extends OALHandle
 	private String rendererName;
 	/** AL extensions. */
 	private Set<String> extensions;
+	/** AL capabilities. */
+	private ALCapabilities capabilities;
 
 	/** Listener. */
 	private OALListener listener;
@@ -138,13 +147,15 @@ public class OALContext extends OALHandle
 	/** Distance model. */
 	private DistanceModel currentDistanceModel;
 	
-	OALContext(OALSystem system, OALDevice device, AttributeValue ... attributes)
+	OALContext(OALDevice device, AttributeValue ... attributes)
 	{
-		super(system);
 		this.device = device;
 		this.attributeMap = new HashMap<>(Math.max(attributes.length, 1), 1f);
 		for (AttributeValue av : attributes)
 			attributeMap.put(av.attribute, av.value);
+
+		this.handle = allocate();
+		this.allocated = true;
 
 		this.nameToSource = new HashMap<>();
 		this.nameToBuffer = new HashMap<>();
@@ -157,8 +168,8 @@ public class OALContext extends OALHandle
 		this.rendererName = null;
 		this.extensions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		this.listener = null;
+		this.capabilities = null;
 		
-		create();
 	}
 
 	/**
@@ -231,6 +242,17 @@ public class OALContext extends OALHandle
 	}
 
 	@Override
+	public long getHandle()
+	{
+		return handle;
+	}
+
+	@Override
+	public boolean isCreated() 
+	{
+		return allocated;
+	}
+
 	protected long allocate() throws SoundException 
 	{
 		long out;
@@ -253,24 +275,28 @@ public class OALContext extends OALHandle
 	}
 
 	@Override
-	protected boolean free() throws SoundException 
-	{
-		ALC11.alcDestroyContext(getHandle());
-		return true;
-	}
-	
-	@Override
 	public void destroy() throws SoundException 
 	{
-		// sources must be first. sources are connected to everything else in a context.
-		destroyObjectsOnMap(nameToSource);
-		destroyObjectsOnMap(nameToBuffer);
-		destroyObjectsOnMap(nameToEffect);
-		destroyObjectsOnMap(nameToEffectSlot);
-		destroyObjectsOnMap(nameToFilter);
-		super.destroy();
+		if (allocated)
+		{
+			suspend();
+			// sources must be first. sources are connected to everything else in a context.
+			destroyObjectsOnMap(nameToSource);
+			destroyObjectsOnMap(nameToBuffer);
+			destroyObjectsOnMap(nameToEffect);
+			destroyObjectsOnMap(nameToEffectSlot);
+			destroyObjectsOnMap(nameToFilter);
+			ALC11.alcDestroyContext(getHandle());
+			handle = 0L;
+			allocated = false;
+		}
 	}
-	
+
+	void setCapabilities(ALCapabilities capabilities) 
+	{
+		this.capabilities = capabilities;
+	}
+
 	void setVendorName(String vendorName)
 	{
 		this.vendorName = vendorName;
@@ -301,6 +327,15 @@ public class OALContext extends OALHandle
 	void setListener(OALListener listener)
 	{
 		this.listener = listener;
+	}
+	
+	/**
+	 * Sets a new context as current.
+	 * @param context the context to make current, or null for no context.
+	 */
+	ContextLock setCurrentContext()
+	{
+		return device.setCurrentContext(this);
 	}
 	
 	/**
@@ -385,6 +420,14 @@ public class OALContext extends OALHandle
 	}
 
 	/**
+	 * @return the capabilities that this context was created with.
+	 */
+	public ALCapabilities getCapabilities() 
+	{
+		return capabilities;
+	}
+	
+	/**
 	 * Convenience method for checking for an OpenAL error and throwing a SoundException
 	 * if an error is raised. 
 	 */
@@ -393,6 +436,24 @@ public class OALContext extends OALHandle
 		int error = AL11.alGetError();
 		if (error != AL11.AL_NO_ERROR)
 			throw new SoundException("OpenAL returned \""+AL11.alGetString(error)+"\".");
+	}
+
+	/**
+	 * Suspends processing of this context.
+	 */
+	public void suspend()
+	{
+		ALC11.alcSuspendContext(getHandle());
+		device.getContextError();
+	}
+
+	/**
+	 * Resumes processing of this context.
+	 */
+	public void process()
+	{
+		ALC11.alcProcessContext(getHandle());
+		device.getContextError();
 	}
 
 	/**

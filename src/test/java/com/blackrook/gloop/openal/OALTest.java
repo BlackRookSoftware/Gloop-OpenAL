@@ -23,7 +23,9 @@ public final class OALTest
 		AudioFormat format = decoder.getDecodedAudioFormat();
 
 		OALSystem system = new OALSystem();
-		OALContext context = system.getCurrentContext();
+		OALDevice device = system.createDevice();
+		OALContext context = device.createContext();
+		
 		System.out.println("OpenAL Vendor:     " + context.getVendorName());
 		System.out.println("OpenAL Version:    " + context.getVersionName());
 		System.out.println("OpenAL Renderer:   " + context.getRendererName());

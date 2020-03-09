@@ -18,12 +18,14 @@ public final class OALTest2
 		AudioFormat format = decoder.getDecodedAudioFormat();
 
 		OALSystem system = new OALSystem();
-		
-		OALBuffer[] buffers = system.getCurrentContext().createBuffers(2);
+		OALDevice device = system.createDevice();
+		OALContext context = device.createContext();
+
+		OALBuffer[] buffers = context.createBuffers(2);
 		buffers[0].setFrequencyAndFormat(format);
 		buffers[1].setFrequencyAndFormat(format);
 		
-		OALSource source = system.getCurrentContext().createSource();
+		OALSource source = context.createSource();
 		source.reset();
 		source.addSourceListener(new OALSourceListener()
 		{

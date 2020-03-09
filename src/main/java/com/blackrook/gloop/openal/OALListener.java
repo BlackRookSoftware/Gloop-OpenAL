@@ -9,6 +9,7 @@ package com.blackrook.gloop.openal;
 
 import org.lwjgl.openal.AL11;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
@@ -72,7 +73,9 @@ public class OALListener
 		position[0] = x;
 		position[1] = y;
 		position[2] = z;
-		AL11.alListenerfv(AL11.AL_POSITION, position);
+		try (ContextLock lock = context.setCurrentContext()) {
+			AL11.alListenerfv(AL11.AL_POSITION, position);
+		}
 		errorCheck();
 	}
 
@@ -87,7 +90,9 @@ public class OALListener
 		velocity[0] = x;
 		velocity[1] = y;
 		velocity[2] = z;
-		AL11.alListenerfv(AL11.AL_VELOCITY, velocity);
+		try (ContextLock lock = context.setCurrentContext()) {
+			AL11.alListenerfv(AL11.AL_VELOCITY, velocity);
+		}
 		errorCheck();
 	}
 
@@ -102,7 +107,9 @@ public class OALListener
 		orientation[0] = x;
 		orientation[1] = y;
 		orientation[2] = z;
-		AL11.alListenerfv(AL11.AL_ORIENTATION, orientation);
+		try (ContextLock lock = context.setCurrentContext()) {
+			AL11.alListenerfv(AL11.AL_ORIENTATION, orientation);
+		}
 		errorCheck();
 	}
 
@@ -117,7 +124,9 @@ public class OALListener
 		orientation[3] = x;
 		orientation[4] = y;
 		orientation[5] = z;
-		AL11.alListenerfv(AL11.AL_ORIENTATION, orientation);
+		try (ContextLock lock = context.setCurrentContext()) {
+			AL11.alListenerfv(AL11.AL_ORIENTATION, orientation);
+		}
 		errorCheck();
 	}
 
@@ -127,9 +136,11 @@ public class OALListener
 	 */
 	public void setGain(float f)
 	{
-		AL11.alListenerf(AL11.AL_GAIN, f);
-		errorCheck();
 		gain = f;
+		try (ContextLock lock = context.setCurrentContext()) {
+			AL11.alListenerf(AL11.AL_GAIN, gain);
+		}
+		errorCheck();
 	}
 	
 	/**

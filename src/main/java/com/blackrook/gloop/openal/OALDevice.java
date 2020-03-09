@@ -7,11 +7,19 @@
  ******************************************************************************/
 package com.blackrook.gloop.openal;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.lwjgl.openal.AL;
+import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALC11;
 import org.lwjgl.openal.ALCCapabilities;
+import org.lwjgl.openal.EXTEfx;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
+import com.blackrook.gloop.openal.exception.SoundSystemException;
 
 /**
  * A device handle in OpenAL. Represents the output sound device.
@@ -20,11 +28,21 @@ import com.blackrook.gloop.openal.exception.SoundException;
  */
 public class OALDevice extends OALHandle
 {
+	/** System. */
+	private OALSystem system;
 	/** The device name. */
 	private String name;
 	/** The device name. */
 	private ALCCapabilities capabilities;
 	
+	/** This object's handle. */
+	private long handle;
+	/** Was this object allocated? */
+	private boolean allocated;
+
+	/** Map of created devices. */
+	private Set<OALContext> openContexts;
+
 	// Default device.
 	OALDevice(OALSystem system)
 	{
@@ -34,11 +52,14 @@ public class OALDevice extends OALHandle
 	// Specific device.
 	OALDevice(OALSystem system, String name)
 	{
-		super(system);
+		this.system = system;
 		this.name = name;
-		create();
+		this.openContexts = new HashSet<>(2, 1f);
+		if ((handle = ALC11.alcOpenDevice(name)) == 0)
+			throw new SoundException("Handle for OALDevice could not be allocated!");
+		this.allocated = true;
 		this.name = name == null ? "DEFAULT" : name;
-		capabilities = ALC.createCapabilities(getHandle());
+		this.capabilities = ALC.createCapabilities(getHandle());
 	}
 
 	/**
@@ -58,15 +79,86 @@ public class OALDevice extends OALHandle
 	}
 	
 	@Override
-	protected long allocate() throws SoundException 
+	public long getHandle()
 	{
-		return ALC11.alcOpenDevice(name);
+		return handle;
 	}
 
 	@Override
+	public boolean isCreated()
+	{
+		return allocated;
+	}
+
+	@Override
+	public void destroy() throws SoundException 
+	{
+		if (allocated)
+		{
+			if (!free())
+				throw new SoundException("Handle for OALDevice could not be deleted!");				
+			handle = 0L;
+			allocated = false;
+		}
+	}
+
 	protected boolean free() throws SoundException 
 	{
+		synchronized (openContexts)
+		{
+			// need to copy set contents - deleting these handles will affect the set as we iterate.
+			OALHandle[] toDelete = new OALHandle[openContexts.size()];
+			openContexts.toArray(toDelete);
+			for (int i = 0; i < toDelete.length; i++)
+			{
+				toDelete[i].destroy();
+				openContexts.remove(toDelete[i]);
+			}
+		}
 		return ALC11.alcCloseDevice(getHandle());
 	}
 
+	/**
+	 * Sets a new context as current.
+	 * @param context the context to make current, or null for no context.
+	 */
+	ContextLock setCurrentContext(OALContext context)
+	{
+		return system.setCurrentContext(context);
+	}
+	
+	/**
+	 * Convenience method for checking for an OpenAL error and throwing a SoundException if an error is raised.
+	 * @throws SoundException if an error was found. 
+	 */
+	public void getContextError()
+	{
+		int error = ALC11.alcGetError(getHandle());
+		if (error != AL11.AL_NO_ERROR)
+			throw new SoundException("OpenAL returned \"" + ALC11.alcGetString(getHandle(), error) + "\".");
+	}
+
+	/**
+	 * Creates a rendering context for a device.
+	 * @param attributes the optional context attributes.
+	 * @return the newly created context.
+	 * @throws SoundSystemException if the context can't be created or there is no current context selected.
+	 */
+	public OALContext createContext(OALContext.AttributeValue ... attributes)
+	{
+		OALContext context = new OALContext(this, attributes);
+		try (ContextLock lock = setCurrentContext(context))
+		{
+			context.setCapabilities(AL.createCapabilities(getCapabilities()));
+			context.setVendorName(AL11.alGetString(AL11.AL_VENDOR));
+			context.setVersionName(AL11.alGetString(AL11.AL_VERSION));
+			context.setRendererName(AL11.alGetString(AL11.AL_RENDERER));
+			context.setExtensions(AL11.alGetString(AL11.AL_EXTENSIONS).split("(\\s|\\n)+"));
+			context.setMaxEffectSlots(ALC11.alcGetInteger(getHandle(), EXTEfx.ALC_MAX_AUXILIARY_SENDS));
+			context.setListener(new OALListener(context));
+		}
+		openContexts.add(context);
+		return context;
+	}
+	
 }

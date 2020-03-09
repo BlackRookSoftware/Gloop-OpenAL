@@ -9,6 +9,7 @@ package com.blackrook.gloop.openal;
 
 import org.lwjgl.openal.AL11;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
@@ -103,11 +104,23 @@ public abstract class OALObject
 	protected abstract void free() throws SoundException;
 	
 	/**
+	 * Sets a new context as current, in order hold a context as current for an AL call.
+	 * @return a context lock for notifying releasing control of the thread.
+	 */
+	protected ContextLock requestContext()
+	{
+		return context.setCurrentContext();
+	}
+	
+	/**
 	 * Convenience method for clearing the OpenAL error state.
 	 */
 	protected void clearError()
 	{
-		while (AL11.alGetError() != AL11.AL_NO_ERROR) ;
+		int err;
+		do {
+			err = AL11.alGetError();
+		} while (err != AL11.AL_NO_ERROR);
 	}
 
 	/**
