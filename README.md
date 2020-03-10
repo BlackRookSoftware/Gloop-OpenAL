@@ -24,7 +24,7 @@ Copyright (c) 2020 Black Rook Software.
 ### Introduction
 
 This library contains classes for encapsulating LWJGL's OpenAL bindings. Manages multicontext seamlessly and in
-an intuitive way, plus has a few utility classes for making some other things like source streaming easier.
+an intuitive way.
 
 
 ### Why?

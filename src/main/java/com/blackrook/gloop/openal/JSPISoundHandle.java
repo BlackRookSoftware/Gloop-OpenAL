@@ -148,7 +148,7 @@ public class JSPISoundHandle
 		/** Bytes per sample of decoded data buffer. */
 		private byte[] decodedBytesPerSample;
 		
-		Decoder() throws IOException, UnsupportedAudioFileException
+		private Decoder() throws IOException, UnsupportedAudioFileException
 		{
 			audioStream = startStream();
 			audioFormat = audioStream.getFormat();
@@ -259,6 +259,14 @@ public class JSPISoundHandle
 			return decodedBytesPerSample.length;
 		}
 		
+		/**
+		 * @return the open audio stream for decoded data.
+		 */
+		public InputStream getDecodedStream()
+		{
+			return decodedAudioStream;
+		}
+
 		/**
 		 * Closes the decoder.
 		 * @throws IOException if an error occurred during close.
