@@ -253,7 +253,7 @@ public class OALContext extends OALHandle
 		return allocated;
 	}
 
-	protected long allocate() throws SoundException 
+	protected long allocate() 
 	{
 		long out;
 		if (attributeMap.isEmpty())
@@ -275,7 +275,7 @@ public class OALContext extends OALHandle
 	}
 
 	@Override
-	public void destroy() throws SoundException 
+	public void destroy() 
 	{
 		if (allocated)
 		{
@@ -459,7 +459,7 @@ public class OALContext extends OALHandle
 	/**
 	 * Allocates a new source and assigns it internally to the current context.
 	 * @return the newly allocated source.
-	 * @throws SoundSystemException if the source can't be created or there is no current context selected.
+	 * @throws SoundException if the source can't be created.
 	 */
 	public OALSource createSource()
 	{
@@ -470,7 +470,7 @@ public class OALContext extends OALHandle
 	 * Allocates a new source and assigns it internally to the current context.
 	 * @param autoVelocity if true, set auto velocity to on for this Source.
 	 * @return the newly allocated source.
-	 * @throws SoundSystemException if the source can't be created.
+	 * @throws SoundException if the source can't be created.
 	 */
 	public OALSource createSource(boolean autoVelocity)
 	{
@@ -480,8 +480,8 @@ public class OALContext extends OALHandle
 	/**
 	 * Allocates a new buffer for loading data into. Buffers are independent
 	 * of device context. 
-	 * @return	a newly allocated buffer.
-	 * @throws	SoundException	if the Buffer can't be allocated somehow.
+	 * @return a newly allocated buffer.
+	 * @throws SoundException if the Buffer can't be allocated somehow.
 	 */
 	public OALBuffer createBuffer()
 	{
@@ -542,7 +542,7 @@ public class OALContext extends OALHandle
 	 * bind one slot to more than one source to save memory, especially if you
 	 * need to alter an effect of filter for more than one sound that is playing.
 	 * @return a new AuxEffectSlot object.
-	 * @throws SoundException	if the slot can't be allocated somehow.
+	 * @throws SoundException if the slot can't be allocated somehow.
 	 */
 	public OALEffectSlot createEffectSlot()
 	{
@@ -552,6 +552,7 @@ public class OALContext extends OALHandle
 	/**
 	 * Creates a new Autowah effect.
 	 * @return	a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public AutowahEffect createAutowahEffect()
 	{
@@ -560,7 +561,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Chorus effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public ChorusEffect createChorusEffect()
 	{
@@ -569,7 +571,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Compressor effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public CompressorEffect createCompressorEffect()
 	{
@@ -578,7 +581,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Distortion effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public DistortionEffect createDistortionEffect()
 	{
@@ -587,7 +591,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Echo effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public EchoEffect createEchoEffect()
 	{
@@ -596,7 +601,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Equalizer effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public EqualizerEffect createEqualizerEffect()
 	{
@@ -605,7 +611,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Flanger effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public FlangerEffect createFlangerEffect()
 	{
@@ -614,7 +621,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Frequency Shift effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public FrequencyShiftEffect createFrequencyShiftEffect()
 	{
@@ -623,7 +631,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Pitch Shift effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public PitchShiftEffect createPitchShiftEffect()
 	{
@@ -632,7 +641,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Reverb effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public ReverbEffect createReverbEffect()
 	{
@@ -641,7 +651,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Ring Modulator effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public RingModulatorEffect createRingModulatorEffect()
 	{
@@ -650,7 +661,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Vocal Morpher effect.
-	 * @return	a new effect of this type with default values set.
+	 * @return a new effect of this type with default values set.
+	 * @throws SoundException if the effect can't be created.
 	 */
 	public VocalMorpherEffect createVocalMorpherEffect()
 	{
@@ -659,7 +671,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new High Pass filter.
-	 * @return	a new filter of this type with default values set.
+	 * @return a new filter of this type with default values set.
+	 * @throws SoundException if the filter can't be created.
 	 */
 	public HighPassFilter createHighPassFilter()
 	{
@@ -668,7 +681,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Low Pass filter.
-	 * @return	a new filter of this type with default values set.
+	 * @return a new filter of this type with default values set.
+	 * @throws SoundException if the filter can't be created.
 	 */
 	public LowPassFilter createLowPassFilter()
 	{
@@ -677,7 +691,8 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Creates a new Band Pass filter.
-	 * @return	a new filter of this type with default values set.
+	 * @return a new filter of this type with default values set.
+	 * @throws SoundException if the filter can't be created.
 	 */
 	public BandPassFilter createBandPassFilter()
 	{

@@ -13,7 +13,6 @@ import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
 import com.blackrook.gloop.openal.OALSystem.ContextLock;
-import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
  * Filter object for OpenAL sources.
@@ -32,7 +31,7 @@ public abstract class OALFilter extends OALObject
 	}
 
 	@Override
-	protected int allocate() throws SoundException
+	protected int allocate()
 	{
 		int out;
 		try (MemoryStack stack = MemoryStack.stackPush())
@@ -50,7 +49,7 @@ public abstract class OALFilter extends OALObject
 	}
 
 	@Override
-	protected void free() throws SoundException
+	protected void free()
 	{
 		try (ContextLock lock = requestContext()) 
 		{

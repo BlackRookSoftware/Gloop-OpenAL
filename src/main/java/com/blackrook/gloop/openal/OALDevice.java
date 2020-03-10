@@ -95,7 +95,7 @@ public class OALDevice extends OALHandle
 	}
 
 	@Override
-	public void destroy() throws SoundException 
+	public void destroy() 
 	{
 		if (allocated)
 		{
@@ -106,7 +106,7 @@ public class OALDevice extends OALHandle
 		}
 	}
 
-	protected boolean free() throws SoundException 
+	protected boolean free() 
 	{
 		synchronized (openContexts)
 		{

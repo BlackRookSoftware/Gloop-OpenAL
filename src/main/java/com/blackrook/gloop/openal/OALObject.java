@@ -76,7 +76,7 @@ public abstract class OALObject
 	 * Destroys this object.
 	 * @throws SoundException if an error occurred destroying the object.
 	 */
-	public void destroy() throws SoundException 
+	public void destroy() 
 	{
 		if (allocated)
 		{
@@ -94,14 +94,14 @@ public abstract class OALObject
 	 * @return the ALId of this new object.
 	 * @throws SoundException if the allocation cannot happen.
 	 */
-	protected abstract int allocate() throws SoundException;
+	protected abstract int allocate();
 	
 	/**
 	 * Destroys this object (deallocates it on OpenAL).
 	 * This is called by destroy().
 	 * @throws SoundException if the deallocation cannot happen.
 	 */
-	protected abstract void free() throws SoundException;
+	protected abstract void free();
 	
 	/**
 	 * Sets a new context as current, in order hold a context as current for an AL call.

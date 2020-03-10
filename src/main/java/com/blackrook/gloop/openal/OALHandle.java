@@ -35,7 +35,7 @@ public abstract class OALHandle
 	 * Destroys this handle. Does nothing if already destroyed.
 	 * @throws SoundException if a problem occurs during free.
 	 */
-	public abstract void destroy() throws SoundException;
+	public abstract void destroy();
 
 	@Override
 	public int hashCode() 

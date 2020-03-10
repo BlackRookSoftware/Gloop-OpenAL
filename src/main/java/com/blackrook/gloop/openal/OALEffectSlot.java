@@ -14,7 +14,6 @@ import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
 import com.blackrook.gloop.openal.OALSystem.ContextLock;
-import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
  * Auxiliary Effect Slot for enforcing effect mixing rules.
@@ -38,7 +37,7 @@ public class OALEffectSlot extends OALObject
 	}
 	
 	@Override
-	protected int allocate() throws SoundException
+	protected int allocate()
 	{
 		int out;
 		try (MemoryStack stack = MemoryStack.stackPush())
@@ -56,7 +55,7 @@ public class OALEffectSlot extends OALObject
 	}
 
 	@Override
-	protected final void free() throws SoundException
+	protected final void free()
 	{
 		try (ContextLock lock = requestContext())
 		{
