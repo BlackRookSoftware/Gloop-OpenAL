@@ -29,7 +29,7 @@ an intuitive way.
 
 ### Why?
 
-This library is those that intensely dislike the bare-metal bindings of LWJGL and would prefer something
+This library is for those that intensely dislike the bare-metal bindings of LWJGL and would prefer something
 that jives with Java's Object-Oriented Paradigm.
 
 
