@@ -12,6 +12,8 @@ import java.nio.IntBuffer;
 import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
+
 /**
  * Effect object for OpenAL sources.
  * TODO: Context locking (plus all effects).
@@ -22,19 +24,26 @@ public abstract class OALEffect extends OALObject
 	protected OALEffect(OALContext context, int alEffectType)
 	{
 		super(context);
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_EFFECT_TYPE, alEffectType);
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(getName(), EXTEfx.AL_EFFECT_TYPE, alEffectType);
+			errorCheck();
+		}
 	}
 	
 	@Override
 	protected final int allocate()
 	{
 		int out;
-		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
-			EXTEfx.alGenEffects(buf);
-			errorCheck();
+			try (ContextLock lock = requestContext()) 
+			{
+				clearError();
+				EXTEfx.alGenEffects(buf);
+				errorCheck();
+			}
 			out = buf.get(0);
 		}
 		return out;
@@ -43,9 +52,12 @@ public abstract class OALEffect extends OALObject
 	@Override
 	protected final void free()
 	{
-		clearError();
-		EXTEfx.alDeleteEffects(getName());
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			clearError();
+			EXTEfx.alDeleteEffects(getName());
+			errorCheck();
+		}
 	}
 	
 }

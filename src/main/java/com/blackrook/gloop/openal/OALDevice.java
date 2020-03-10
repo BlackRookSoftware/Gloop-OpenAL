@@ -9,6 +9,7 @@ package com.blackrook.gloop.openal;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL11;
@@ -28,6 +29,9 @@ import com.blackrook.gloop.openal.exception.SoundSystemException;
  */
 public class OALDevice extends OALHandle
 {
+	private static final Object CONTEXT_CREATE_MUTEX = new Object();
+	private static final AtomicInteger MULTICONTEXT_LATCH = new AtomicInteger(0);
+	
 	/** System. */
 	private OALSystem system;
 	/** The device name. */
@@ -146,19 +150,27 @@ public class OALDevice extends OALHandle
 	 */
 	public OALContext createContext(OALContext.AttributeValue ... attributes)
 	{
-		OALContext context = new OALContext(this, attributes);
-		try (ContextLock lock = setCurrentContext(context))
+		synchronized(CONTEXT_CREATE_MUTEX)
 		{
-			context.setCapabilities(AL.createCapabilities(getCapabilities()));
-			context.setVendorName(AL11.alGetString(AL11.AL_VENDOR));
-			context.setVersionName(AL11.alGetString(AL11.AL_VERSION));
-			context.setRendererName(AL11.alGetString(AL11.AL_RENDERER));
-			context.setExtensions(AL11.alGetString(AL11.AL_EXTENSIONS).split("(\\s|\\n)+"));
-			context.setMaxEffectSlots(ALC11.alcGetInteger(getHandle(), EXTEfx.ALC_MAX_AUXILIARY_SENDS));
-			context.setListener(new OALListener(context));
+			// if already one, upgrade to strict lock.
+			if (MULTICONTEXT_LATCH.get() == 1)
+				system.upgradeLock();
+			MULTICONTEXT_LATCH.incrementAndGet();
+			
+			OALContext context = new OALContext(this, attributes);
+			try (ContextLock lock = setCurrentContext(context))
+			{
+				context.setCapabilities(AL.createCapabilities(getCapabilities()));
+				context.setVendorName(AL11.alGetString(AL11.AL_VENDOR));
+				context.setVersionName(AL11.alGetString(AL11.AL_VERSION));
+				context.setRendererName(AL11.alGetString(AL11.AL_RENDERER));
+				context.setExtensions(AL11.alGetString(AL11.AL_EXTENSIONS).split("(\\s|\\n)+"));
+				context.setMaxEffectSlots(ALC11.alcGetInteger(getHandle(), EXTEfx.ALC_MAX_AUXILIARY_SENDS));
+				context.setListener(new OALListener(context));
+			}
+			openContexts.add(context);
+			return context;
 		}
-		openContexts.add(context);
-		return context;
 	}
 	
 }

@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -107,9 +108,12 @@ public class VocalMorpherEffect extends OALEffect
 	public final void setPhonemeA(Phoneme phonemeA)
 	{
 		this.phonemeA = phonemeA;
-		// AL_VOCAL_MORPHER_PHONEMEA was not in LWJGL.
-		EXTEfx.alEffecti(getName(), 1 /* AL_VOCAL_MORPHER_PHONEMEA */, phonemeA.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			// AL_VOCAL_MORPHER_PHONEMEA was not in LWJGL.
+			EXTEfx.alEffecti(getName(), 1 /* AL_VOCAL_MORPHER_PHONEMEA */, phonemeA.alVal);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -127,9 +131,16 @@ public class VocalMorpherEffect extends OALEffect
 	public final void setPhonemeACoarseTuning(int phonemeACoarseTuning)
 	{
 		this.phonemeACoarseTuning = phonemeACoarseTuning;
-		// AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING was not in LWJGL.
-		EXTEfx.alEffecti(getName(), 2 /* AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING */, MathUtils.clampValue(phonemeACoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEA_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEA_COARSE_TUNING));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			// AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING was not in LWJGL.
+			EXTEfx.alEffecti(
+				getName(), 
+				2 /* AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING */, 
+				MathUtils.clampValue(phonemeACoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEA_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEA_COARSE_TUNING)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -147,9 +158,12 @@ public class VocalMorpherEffect extends OALEffect
 	public final void setPhonemeB(Phoneme phonemeB)
 	{
 		this.phonemeB = phonemeB;
-		// AL_VOCAL_MORPHER_PHONEMEB was not in LWJGL.
-		EXTEfx.alEffecti(getName(), 3 /* AL_VOCAL_MORPHER_PHONEMEB */, phonemeB.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			// AL_VOCAL_MORPHER_PHONEMEB was not in LWJGL.
+			EXTEfx.alEffecti(getName(), 3 /* AL_VOCAL_MORPHER_PHONEMEB */, phonemeB.alVal);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -167,9 +181,16 @@ public class VocalMorpherEffect extends OALEffect
 	public final void setPhonemeBCoarseTuning(int phonemeBCoarseTuning)
 	{
 		this.phonemeBCoarseTuning = phonemeBCoarseTuning;
-		// AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING was not in LWJGL.
-		EXTEfx.alEffecti(getName(), 4 /* AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING */, MathUtils.clampValue(phonemeBCoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEB_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEB_COARSE_TUNING));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			// AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING was not in LWJGL.
+			EXTEfx.alEffecti(
+				getName(), 
+				4 /* AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING */, 
+				MathUtils.clampValue(phonemeBCoarseTuning, EXTEfx.AL_VOCAL_MORPHER_MIN_PHONEMEB_COARSE_TUNING, EXTEfx.AL_VOCAL_MORPHER_MAX_PHONEMEB_COARSE_TUNING)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -187,9 +208,16 @@ public class VocalMorpherEffect extends OALEffect
 	public final void setRate(float rate)
 	{
 		this.rate = rate;
-		// AL_VOCAL_MORPHER_RATE was not in LWJGL.
-		EXTEfx.alEffectf(getName(), 6 /* AL_VOCAL_MORPHER_RATE */, MathUtils.clampValue(rate, EXTEfx.AL_VOCAL_MORPHER_MIN_RATE, EXTEfx.AL_VOCAL_MORPHER_MAX_RATE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			// AL_VOCAL_MORPHER_RATE was not in LWJGL.
+			EXTEfx.alEffectf(
+				getName(), 
+				6 /* AL_VOCAL_MORPHER_RATE */, 
+				MathUtils.clampValue(rate, EXTEfx.AL_VOCAL_MORPHER_MIN_RATE, EXTEfx.AL_VOCAL_MORPHER_MAX_RATE)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -207,9 +235,12 @@ public class VocalMorpherEffect extends OALEffect
 	public final void setWaveform(WaveForm waveform)
 	{
 		this.waveForm = waveform;
-		// AL_VOCAL_MORPHER_WAVEFORM was not in LWJGL.
-		EXTEfx.alEffecti(getName(), 5 /* AL_VOCAL_MORPHER_WAVEFORM */, waveform.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			// AL_VOCAL_MORPHER_WAVEFORM was not in LWJGL.
+			EXTEfx.alEffecti(getName(), 5 /* AL_VOCAL_MORPHER_WAVEFORM */, waveform.alVal);
+			errorCheck();
+		}
 	}
 	
 }

@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -68,8 +69,15 @@ public class FlangerEffect extends OALEffect
 	public final void setDelay(float delay)
 	{
 		this.delay = delay;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_DELAY, MathUtils.clampValue(delay, EXTEfx.AL_FLANGER_MIN_DELAY, EXTEfx.AL_FLANGER_MAX_DELAY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_FLANGER_DELAY,
+				MathUtils.clampValue(delay, EXTEfx.AL_FLANGER_MIN_DELAY, EXTEfx.AL_FLANGER_MAX_DELAY)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -87,8 +95,15 @@ public class FlangerEffect extends OALEffect
 	public final void setDepth(float depth)
 	{
 		this.depth = depth;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_DEPTH, MathUtils.clampValue(depth, EXTEfx.AL_FLANGER_MIN_DEPTH, EXTEfx.AL_FLANGER_MAX_DEPTH));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_FLANGER_DEPTH, 
+				MathUtils.clampValue(depth, EXTEfx.AL_FLANGER_MIN_DEPTH, EXTEfx.AL_FLANGER_MAX_DEPTH)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -106,8 +121,15 @@ public class FlangerEffect extends OALEffect
 	public final void setFeedback(float feedback)
 	{
 		this.feedback = feedback;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_FEEDBACK, MathUtils.clampValue(feedback, EXTEfx.AL_FLANGER_MIN_FEEDBACK, EXTEfx.AL_FLANGER_MAX_FEEDBACK));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_FLANGER_FEEDBACK, 
+				MathUtils.clampValue(feedback, EXTEfx.AL_FLANGER_MIN_FEEDBACK, EXTEfx.AL_FLANGER_MAX_FEEDBACK)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -125,8 +147,15 @@ public class FlangerEffect extends OALEffect
 	public final void setPhase(int phase)
 	{
 		this.phase = phase;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_FLANGER_PHASE, MathUtils.clampValue(phase, EXTEfx.AL_FLANGER_MIN_PHASE, EXTEfx.AL_FLANGER_MAX_PHASE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(
+				getName(), 
+				EXTEfx.AL_FLANGER_PHASE, 
+				MathUtils.clampValue(phase, EXTEfx.AL_FLANGER_MIN_PHASE, EXTEfx.AL_FLANGER_MAX_PHASE)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -144,8 +173,15 @@ public class FlangerEffect extends OALEffect
 	public final void setRate(float rate)
 	{
 		this.rate = rate;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_FLANGER_RATE, MathUtils.clampValue(rate, EXTEfx.AL_FLANGER_MIN_RATE, EXTEfx.AL_FLANGER_MAX_RATE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_FLANGER_RATE, 
+				MathUtils.clampValue(rate, EXTEfx.AL_FLANGER_MIN_RATE, EXTEfx.AL_FLANGER_MAX_RATE)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -163,8 +199,11 @@ public class FlangerEffect extends OALEffect
 	public final void setWaveForm(WaveForm waveForm)
 	{
 		this.waveForm = waveForm;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_FLANGER_WAVEFORM, waveForm.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(getName(), EXTEfx.AL_FLANGER_WAVEFORM, waveForm.alVal);
+			errorCheck();
+		}
 	}
 	
 }

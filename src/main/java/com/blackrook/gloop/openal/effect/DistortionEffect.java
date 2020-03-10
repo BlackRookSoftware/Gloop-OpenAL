@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -55,8 +56,15 @@ public class DistortionEffect extends OALEffect
 	public final void setGain(float gain)
 	{
 		this.gain = gain;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_DISTORTION_GAIN, MathUtils.clampValue(gain, EXTEfx.AL_DISTORTION_MIN_GAIN, EXTEfx.AL_DISTORTION_MAX_GAIN));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_DISTORTION_GAIN, 
+				MathUtils.clampValue(gain, EXTEfx.AL_DISTORTION_MIN_GAIN, EXTEfx.AL_DISTORTION_MAX_GAIN)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -74,8 +82,15 @@ public class DistortionEffect extends OALEffect
 	public final void setEdge(float edge)
 	{
 		this.edge = edge;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_DISTORTION_EDGE, MathUtils.clampValue(edge, EXTEfx.AL_DISTORTION_MIN_EDGE, EXTEfx.AL_DISTORTION_MAX_EDGE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_DISTORTION_EDGE, 
+				MathUtils.clampValue(edge, EXTEfx.AL_DISTORTION_MIN_EDGE, EXTEfx.AL_DISTORTION_MAX_EDGE)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -93,8 +108,15 @@ public class DistortionEffect extends OALEffect
 	public final void setEqualizerBandwidth(float eqBandwidth)
 	{
 		this.eqBandwidth = eqBandwidth;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_DISTORTION_EQBANDWIDTH, MathUtils.clampValue(eqBandwidth, EXTEfx.AL_DISTORTION_MIN_EQBANDWIDTH, EXTEfx.AL_DISTORTION_MAX_EQBANDWIDTH));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_DISTORTION_EQBANDWIDTH, 
+				MathUtils.clampValue(eqBandwidth, EXTEfx.AL_DISTORTION_MIN_EQBANDWIDTH, EXTEfx.AL_DISTORTION_MAX_EQBANDWIDTH)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -112,8 +134,15 @@ public class DistortionEffect extends OALEffect
 	public final void setEqualizerCenter(float eqCenter)
 	{
 		this.eqCenter = eqCenter;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_DISTORTION_EQCENTER, MathUtils.clampValue(eqCenter, EXTEfx.AL_DISTORTION_MIN_EQCENTER, EXTEfx.AL_DISTORTION_MAX_EQCENTER));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_DISTORTION_EQCENTER, 
+				MathUtils.clampValue(eqCenter, EXTEfx.AL_DISTORTION_MIN_EQCENTER, EXTEfx.AL_DISTORTION_MAX_EQCENTER)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -131,8 +160,15 @@ public class DistortionEffect extends OALEffect
 	public final void setLowPassCutoff(float lowPassCutoff)
 	{
 		this.lowPassCutoff = lowPassCutoff;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_DISTORTION_LOWPASS_CUTOFF, MathUtils.clampValue(lowPassCutoff, EXTEfx.AL_DISTORTION_MIN_LOWPASS_CUTOFF, EXTEfx.AL_DISTORTION_MAX_LOWPASS_CUTOFF));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_DISTORTION_LOWPASS_CUTOFF, 
+				MathUtils.clampValue(lowPassCutoff, EXTEfx.AL_DISTORTION_MIN_LOWPASS_CUTOFF, EXTEfx.AL_DISTORTION_MAX_LOWPASS_CUTOFF)
+			);
+			errorCheck();
+		}
 	}
 
 }

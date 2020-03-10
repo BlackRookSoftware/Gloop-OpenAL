@@ -12,11 +12,11 @@ import java.nio.IntBuffer;
 import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
  * Filter object for OpenAL sources.
- * TODO: Context locking (plus all filters).
  * @author Matthew Tropiano
  */
 public abstract class OALFilter extends OALObject
@@ -24,19 +24,26 @@ public abstract class OALFilter extends OALObject
 	protected OALFilter(OALContext context, int alFilterType)
 	{
 		super(context);
-		EXTEfx.alFilteri(getName(), EXTEfx.AL_FILTER_TYPE, alFilterType);
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alFilteri(getName(), EXTEfx.AL_FILTER_TYPE, alFilterType);
+			errorCheck();
+		}
 	}
 
 	@Override
 	protected int allocate() throws SoundException
 	{
 		int out;
-		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
-			EXTEfx.alGenFilters(buf);
-			errorCheck();
+			try (ContextLock lock = requestContext()) 
+			{
+				clearError();
+				EXTEfx.alGenFilters(buf);
+				errorCheck();
+			}
 			out = buf.get(0);
 		}
 		return out;
@@ -45,9 +52,12 @@ public abstract class OALFilter extends OALObject
 	@Override
 	protected void free() throws SoundException
 	{
-		clearError();
-		EXTEfx.alDeleteFilters(getName());
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			clearError();
+			EXTEfx.alDeleteFilters(getName());
+			errorCheck();
+		}
 	}
 
 }

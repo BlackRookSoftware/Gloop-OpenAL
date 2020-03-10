@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -60,8 +61,15 @@ public class FrequencyShiftEffect extends OALEffect
 	public final void setFrequency(float frequency)
 	{
 		this.frequency = frequency;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_FREQUENCY_SHIFTER_FREQUENCY, MathUtils.clampValue(frequency, EXTEfx.AL_FREQUENCY_SHIFTER_MIN_FREQUENCY, EXTEfx.AL_FREQUENCY_SHIFTER_MAX_FREQUENCY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_FREQUENCY_SHIFTER_FREQUENCY,
+				MathUtils.clampValue(frequency, EXTEfx.AL_FREQUENCY_SHIFTER_MIN_FREQUENCY, EXTEfx.AL_FREQUENCY_SHIFTER_MAX_FREQUENCY)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -79,8 +87,11 @@ public class FrequencyShiftEffect extends OALEffect
 	public final void setLeftDirection(Direction leftDir)
 	{
 		this.leftDir = leftDir;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_FREQUENCY_SHIFTER_LEFT_DIRECTION, leftDir.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(getName(), EXTEfx.AL_FREQUENCY_SHIFTER_LEFT_DIRECTION, leftDir.alVal);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -98,8 +109,11 @@ public class FrequencyShiftEffect extends OALEffect
 	public final void setRightDirection(Direction rightDir)
 	{
 		this.rightDir = rightDir;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_FREQUENCY_SHIFTER_RIGHT_DIRECTION, rightDir.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(getName(), EXTEfx.AL_FREQUENCY_SHIFTER_RIGHT_DIRECTION, rightDir.alVal);
+			errorCheck();
+		}
 	}
 	
 }

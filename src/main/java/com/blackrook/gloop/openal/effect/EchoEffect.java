@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -55,8 +56,15 @@ public class EchoEffect extends OALEffect
 	public final void setDelay(float delay)
 	{
 		this.delay = delay;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_ECHO_DELAY, MathUtils.clampValue(delay, EXTEfx.AL_ECHO_MIN_DELAY, EXTEfx.AL_ECHO_MAX_DELAY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_ECHO_DELAY,
+				MathUtils.clampValue(delay, EXTEfx.AL_ECHO_MIN_DELAY, EXTEfx.AL_ECHO_MAX_DELAY)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -74,8 +82,15 @@ public class EchoEffect extends OALEffect
 	public final void setLRDelay(float lrDelay)
 	{
 		this.lrDelay = lrDelay;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_ECHO_LRDELAY, MathUtils.clampValue(lrDelay, EXTEfx.AL_ECHO_MIN_LRDELAY, EXTEfx.AL_ECHO_MAX_LRDELAY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_ECHO_LRDELAY, 
+				MathUtils.clampValue(lrDelay, EXTEfx.AL_ECHO_MIN_LRDELAY, EXTEfx.AL_ECHO_MAX_LRDELAY)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -93,8 +108,15 @@ public class EchoEffect extends OALEffect
 	public final void setFeedback(float feedback)
 	{
 		this.feedback = feedback;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_ECHO_FEEDBACK, MathUtils.clampValue(feedback, EXTEfx.AL_ECHO_MIN_FEEDBACK, EXTEfx.AL_ECHO_MAX_FEEDBACK));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_ECHO_FEEDBACK, 
+				MathUtils.clampValue(feedback, EXTEfx.AL_ECHO_MIN_FEEDBACK, EXTEfx.AL_ECHO_MAX_FEEDBACK)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -112,8 +134,15 @@ public class EchoEffect extends OALEffect
 	public final void setDamping(float damping)
 	{
 		this.damping = damping;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_ECHO_DAMPING, MathUtils.clampValue(damping, EXTEfx.AL_ECHO_MIN_DAMPING, EXTEfx.AL_ECHO_MAX_DAMPING));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_ECHO_DAMPING, 
+				MathUtils.clampValue(damping, EXTEfx.AL_ECHO_MIN_DAMPING, EXTEfx.AL_ECHO_MAX_DAMPING)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -131,8 +160,15 @@ public class EchoEffect extends OALEffect
 	public final void setSpread(float spread)
 	{
 		this.spread = spread;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_ECHO_SPREAD, MathUtils.clampValue(spread, EXTEfx.AL_ECHO_MIN_SPREAD, EXTEfx.AL_ECHO_MAX_SPREAD));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_ECHO_SPREAD, 
+				MathUtils.clampValue(spread, EXTEfx.AL_ECHO_MIN_SPREAD, EXTEfx.AL_ECHO_MAX_SPREAD)
+			);
+			errorCheck();
+		}
 	}
 	
 }

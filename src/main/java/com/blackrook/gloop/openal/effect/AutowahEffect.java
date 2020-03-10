@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -52,8 +53,15 @@ public class AutowahEffect extends OALEffect
 	public final void setAttackTime(float attackTime)
 	{
 		this.attackTime = attackTime;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_AUTOWAH_ATTACK_TIME, MathUtils.clampValue(attackTime, EXTEfx.AL_AUTOWAH_MIN_ATTACK_TIME, EXTEfx.AL_AUTOWAH_MAX_ATTACK_TIME));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_AUTOWAH_ATTACK_TIME, 
+				MathUtils.clampValue(attackTime, EXTEfx.AL_AUTOWAH_MIN_ATTACK_TIME, EXTEfx.AL_AUTOWAH_MAX_ATTACK_TIME)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -71,8 +79,15 @@ public class AutowahEffect extends OALEffect
 	public final void setPeakGain(float peakGain)
 	{
 		this.peakGain = peakGain;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_AUTOWAH_PEAK_GAIN, MathUtils.clampValue(peakGain, EXTEfx.AL_AUTOWAH_MIN_PEAK_GAIN, EXTEfx.AL_AUTOWAH_MAX_PEAK_GAIN));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(),
+				EXTEfx.AL_AUTOWAH_PEAK_GAIN,
+				MathUtils.clampValue(peakGain, EXTEfx.AL_AUTOWAH_MIN_PEAK_GAIN, EXTEfx.AL_AUTOWAH_MAX_PEAK_GAIN)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -90,8 +105,15 @@ public class AutowahEffect extends OALEffect
 	public final void setReleaseTime(float releaseTime)
 	{
 		this.releaseTime = releaseTime;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_AUTOWAH_RELEASE_TIME, MathUtils.clampValue(releaseTime, EXTEfx.AL_AUTOWAH_MIN_RELEASE_TIME, EXTEfx.AL_AUTOWAH_MAX_RELEASE_TIME));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_AUTOWAH_RELEASE_TIME, 
+				MathUtils.clampValue(releaseTime, EXTEfx.AL_AUTOWAH_MIN_RELEASE_TIME, EXTEfx.AL_AUTOWAH_MAX_RELEASE_TIME)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -109,8 +131,15 @@ public class AutowahEffect extends OALEffect
 	public final void setResonance(float resonance)
 	{
 		this.resonance = resonance;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_AUTOWAH_RESONANCE, MathUtils.clampValue(resonance, EXTEfx.AL_AUTOWAH_MIN_RESONANCE, EXTEfx.AL_AUTOWAH_MAX_RESONANCE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_AUTOWAH_RESONANCE, 
+				MathUtils.clampValue(resonance, EXTEfx.AL_AUTOWAH_MIN_RESONANCE, EXTEfx.AL_AUTOWAH_MAX_RESONANCE)
+			);
+			errorCheck();
+		}
 	}
 	
 }

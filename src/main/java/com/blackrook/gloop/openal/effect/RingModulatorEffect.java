@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -60,8 +61,11 @@ public class RingModulatorEffect extends OALEffect
 	public final void setWaveform(WaveForm waveform)
 	{
 		this.waveForm = waveform;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_RING_MODULATOR_WAVEFORM, waveform.alVal);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(getName(), EXTEfx.AL_RING_MODULATOR_WAVEFORM, waveform.alVal);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -79,8 +83,15 @@ public class RingModulatorEffect extends OALEffect
 	public final void setFrequency(float frequency)
 	{
 		this.frequency = frequency;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_RING_MODULATOR_FREQUENCY, MathUtils.clampValue(frequency, EXTEfx.AL_RING_MODULATOR_MIN_FREQUENCY, EXTEfx.AL_RING_MODULATOR_MAX_FREQUENCY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_RING_MODULATOR_FREQUENCY,
+				MathUtils.clampValue(frequency, EXTEfx.AL_RING_MODULATOR_MIN_FREQUENCY, EXTEfx.AL_RING_MODULATOR_MAX_FREQUENCY)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -98,8 +109,15 @@ public class RingModulatorEffect extends OALEffect
 	public final void setHighPassCutoff(float highPassCutoff)
 	{
 		this.highPassCutoff = highPassCutoff;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_RING_MODULATOR_HIGHPASS_CUTOFF, MathUtils.clampValue(highPassCutoff, EXTEfx.AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF, EXTEfx.AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_RING_MODULATOR_HIGHPASS_CUTOFF, 
+				MathUtils.clampValue(highPassCutoff, EXTEfx.AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF, EXTEfx.AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF)
+			);
+			errorCheck();
+		}
 	}
 
 }

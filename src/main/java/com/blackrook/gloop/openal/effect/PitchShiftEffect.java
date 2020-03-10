@@ -11,6 +11,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -46,8 +47,15 @@ public class PitchShiftEffect extends OALEffect
 	public final void setCoarseTuning(int coarse)
 	{
 		this.coarse = coarse;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_PITCH_SHIFTER_COARSE_TUNE, MathUtils.clampValue(coarse, EXTEfx.AL_PITCH_SHIFTER_MIN_COARSE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_COARSE_TUNE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(
+				getName(), 
+				EXTEfx.AL_PITCH_SHIFTER_COARSE_TUNE,
+				MathUtils.clampValue(coarse, EXTEfx.AL_PITCH_SHIFTER_MIN_COARSE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_COARSE_TUNE)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -65,8 +73,15 @@ public class PitchShiftEffect extends OALEffect
 	public final void setFineTuning(int fine)
 	{
 		this.fine = fine;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_PITCH_SHIFTER_FINE_TUNE, MathUtils.clampValue(fine, EXTEfx.AL_PITCH_SHIFTER_MIN_FINE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_FINE_TUNE));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(
+				getName(), 
+				EXTEfx.AL_PITCH_SHIFTER_FINE_TUNE, 
+				MathUtils.clampValue(fine, EXTEfx.AL_PITCH_SHIFTER_MIN_FINE_TUNE, EXTEfx.AL_PITCH_SHIFTER_MAX_FINE_TUNE)
+			);
+			errorCheck();
+		}
 	}
 	
 }

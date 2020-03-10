@@ -19,12 +19,12 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import com.blackrook.gloop.openal.JSPISoundHandle.Decoder;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
 import com.blackrook.gloop.openal.struct.IOUtils;
 
 /**
  * Sound sample buffer class.
- * TODO: Context locking.
  * @author Matthew Tropiano
  */
 public final class OALBuffer extends OALObject
@@ -130,13 +130,16 @@ public final class OALBuffer extends OALObject
 	protected final int allocate()
 	{
 		int out;
-		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
-			AL11.alGenBuffers(buf);
+			try (ContextLock lock = requestContext()) 
+			{
+				clearError();
+				AL11.alGenBuffers(buf);
+				errorCheck();
+			}
 			out = buf.get(0);
-			errorCheck();
 		}
 		return out;
 	}
@@ -144,8 +147,11 @@ public final class OALBuffer extends OALObject
 	@Override
 	protected final void free()
 	{
-		AL11.alDeleteBuffers(getName());
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			AL11.alDeleteBuffers(getName());
+			errorCheck();
+		}
 	}
 
 	/**
@@ -196,9 +202,12 @@ public final class OALBuffer extends OALObject
 		if (len % width != 0)
 			throw new SoundException("Input data is not aligned to sample size - len: " + len + " width: " + width);
 
-		clearError();
-		AL11.alBufferData(getName(), bufferFormat.alVal, data, bufferRate);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			clearError();
+			AL11.alBufferData(getName(), bufferFormat.alVal, data, bufferRate);
+			errorCheck();
+		}
 		bufferSize = len;
 	}
 

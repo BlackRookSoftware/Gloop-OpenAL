@@ -6,6 +6,7 @@ Copyright (c) 2020 Black Rook Software.
 
 [Latest Release](https://github.com/BlackRookSoftware/Gloop-OpenAL/releases/latest)
 
+
 ### Required Libraries
 
 [LightWeight Java Game Library (LWJGL)](https://www.lwjgl.org/download) 3.0.0+  
@@ -22,7 +23,8 @@ Copyright (c) 2020 Black Rook Software.
 
 ### Introduction
 
-This library contains classes for encapsulating LWJGL's OpenAL bindings.
+This library contains classes for encapsulating LWJGL's OpenAL bindings. Manages multicontext seamlessly and in
+an intuitive way, plus has a few utility classes for making some other things like source streaming easier.
 
 
 ### Why?
@@ -36,6 +38,11 @@ that jives with Java's Object-Oriented Paradigm.
 Contained in this release is a series of classes that are used for driving LWJGL's OpenAL bindings.
 
 The javadocs contain basic outlines of each package's contents.
+
+
+### TODO...
+
+* Audio capture via ALCCapture devices.
 
 
 ### Compiling with Ant

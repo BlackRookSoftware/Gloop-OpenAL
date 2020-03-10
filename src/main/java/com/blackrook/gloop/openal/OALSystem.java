@@ -25,23 +25,68 @@ public final class OALSystem
 	/**
 	 * A way to lock a current context down for a series of calls to OpenAL.
 	 */
-	public class ContextLock implements AutoCloseable
+	public interface ContextLock extends AutoCloseable
+	{
+		/**
+		 * <b>DO NOT CALL THIS METHOD DIRECTLY.</b> 
+		 * This is called by the time the user receives it, 
+		 * and serves as a means for obscuring a locking mechanism. 
+		 */
+		public void lock();
+		
+		/**
+		 * <b>YOU SHOULD NOT NEED TO CALL THIS METHOD DIRECTLY.</b> 
+		 * This is meant to be automatically called from a try-with-resources. 
+		 */
+		@Override
+		public void close();
+	}
+	
+	/**
+	 * A way to lock a current context down for a series of calls to OpenAL.
+	 * The "AL" (not "ALC") calls rely on current context, so while the call is made,
+	 * it cannot change when a context is being altered through them.
+	 */
+	private static class ReentrantContextLock implements ContextLock
 	{
 		private ReentrantLock lock;
 
-		private ContextLock()
+		private ReentrantContextLock()
 		{
 			this.lock = new ReentrantLock();
 		}
 		
-		/**
-		 * DO NOT CALL THIS METHOD DIRECTLY. 
-		 * This is meant to be automatically called from a try-with-resources. 
-		 */
+		@Override
+		public void lock() 
+		{
+			lock.lock();
+		}
+		
 		@Override
 		public void close()
 		{
 			lock.unlock();
+		}
+	}
+	
+	/**
+	 * A no-op context lock for single-context environment.
+	 * In single-context setups, doing any sort of multithread protection
+	 * is unnecessary since OpenAL is thread-safe already and caring about a 
+	 * critical section, if any, is moot if there is only one context to manage.
+	 */
+	public static class NoOpContextLock implements ContextLock
+	{
+		@Override
+		public void lock() 
+		{
+			// Do nothing.
+		}
+
+		@Override
+		public void close()
+		{
+			// Do nothing.
 		}
 	}
 	
@@ -59,16 +104,25 @@ public final class OALSystem
 	{
 		this.currentContext = null;
 		this.openDevices = new HashSet<>(2, 1f);
-		this.contextLock = new ContextLock();
+		this.contextLock = new NoOpContextLock();
 	}
 
+	/**
+	 * Upgrades the context lock to a strict lock.
+	 */
+	void upgradeLock()
+	{
+		if (!(contextLock instanceof ReentrantContextLock))
+			contextLock = new ReentrantContextLock();
+	}
+	
 	/**
 	 * Sets a new context as current.
 	 * @param context the context to make current, or null for no context.
 	 */
 	ContextLock setCurrentContext(OALContext context)
 	{
-		contextLock.lock.lock();
+		contextLock.lock();
 		// already current? Do nothing.
 		if (currentContext == context)
 			return contextLock;

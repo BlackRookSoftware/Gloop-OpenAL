@@ -12,6 +12,7 @@ import org.lwjgl.openal.EXTEfx;
 
 import com.blackrook.gloop.openal.OALContext;
 import com.blackrook.gloop.openal.OALEffect;
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
@@ -80,8 +81,15 @@ public class ReverbEffect extends OALEffect
 	public final void setAirAbsorptionGainHF(float airAbsorptionGainHF)
 	{
 		this.airAbsorptionGainHF = airAbsorptionGainHF;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_AIR_ABSORPTION_GAINHF, MathUtils.clampValue(airAbsorptionGainHF, EXTEfx.AL_REVERB_MIN_AIR_ABSORPTION_GAINHF, EXTEfx.AL_REVERB_MAX_AIR_ABSORPTION_GAINHF));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_AIR_ABSORPTION_GAINHF, 
+				MathUtils.clampValue(airAbsorptionGainHF, EXTEfx.AL_REVERB_MIN_AIR_ABSORPTION_GAINHF, EXTEfx.AL_REVERB_MAX_AIR_ABSORPTION_GAINHF)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -99,8 +107,15 @@ public class ReverbEffect extends OALEffect
 	public final void setDecayHFRatio(float decayHFRatio)
 	{
 		this.decayHFRatio = decayHFRatio;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_DECAY_HFRATIO, MathUtils.clampValue(decayHFRatio, EXTEfx.AL_REVERB_MIN_DECAY_HFRATIO, EXTEfx.AL_REVERB_MAX_DECAY_HFRATIO));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_DECAY_HFRATIO,
+				MathUtils.clampValue(decayHFRatio, EXTEfx.AL_REVERB_MIN_DECAY_HFRATIO, EXTEfx.AL_REVERB_MAX_DECAY_HFRATIO)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -118,8 +133,15 @@ public class ReverbEffect extends OALEffect
 	public final void setDecayTime(float decayTime)
 	{
 		this.decayTime = decayTime;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_DECAY_TIME, MathUtils.clampValue(decayTime, EXTEfx.AL_REVERB_MIN_DECAY_TIME, EXTEfx.AL_REVERB_MAX_DECAY_TIME));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_DECAY_TIME, 
+				MathUtils.clampValue(decayTime, EXTEfx.AL_REVERB_MIN_DECAY_TIME, EXTEfx.AL_REVERB_MAX_DECAY_TIME)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -137,8 +159,15 @@ public class ReverbEffect extends OALEffect
 	public final void setDensity(float density)
 	{
 		this.density = density;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_DENSITY, MathUtils.clampValue(density, EXTEfx.AL_REVERB_MIN_DENSITY, EXTEfx.AL_REVERB_MAX_DENSITY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_DENSITY, 
+				MathUtils.clampValue(density, EXTEfx.AL_REVERB_MIN_DENSITY, EXTEfx.AL_REVERB_MAX_DENSITY)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -156,8 +185,15 @@ public class ReverbEffect extends OALEffect
 	public final void setDiffusion(float diffusion)
 	{
 		this.diffusion = diffusion;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_DIFFUSION, MathUtils.clampValue(diffusion, EXTEfx.AL_REVERB_MIN_DIFFUSION, EXTEfx.AL_REVERB_MAX_DIFFUSION));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_DIFFUSION, 
+				MathUtils.clampValue(diffusion, EXTEfx.AL_REVERB_MIN_DIFFUSION, EXTEfx.AL_REVERB_MAX_DIFFUSION)
+			);
+			errorCheck();
+		}
 	}
 
 	/**
@@ -175,8 +211,15 @@ public class ReverbEffect extends OALEffect
 	public final void setGain(float gain)
 	{
 		this.gain = gain;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_GAIN, MathUtils.clampValue(gain, EXTEfx.AL_REVERB_MIN_GAIN, EXTEfx.AL_REVERB_MAX_GAIN));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_GAIN, 
+				MathUtils.clampValue(gain, EXTEfx.AL_REVERB_MIN_GAIN, EXTEfx.AL_REVERB_MAX_GAIN)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -194,8 +237,15 @@ public class ReverbEffect extends OALEffect
 	public final void setHFGain(float gainHF)
 	{
 		this.gainHF = gainHF;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_GAINHF, MathUtils.clampValue(gainHF, EXTEfx.AL_REVERB_MIN_GAINHF, EXTEfx.AL_REVERB_MAX_GAINHF));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_GAINHF, 
+				MathUtils.clampValue(gainHF, EXTEfx.AL_REVERB_MIN_GAINHF, EXTEfx.AL_REVERB_MAX_GAINHF)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -213,8 +263,11 @@ public class ReverbEffect extends OALEffect
 	public final void setDecayHFLimit(boolean limit)
 	{
 		hfLimit = limit;
-		EXTEfx.alEffecti(getName(), EXTEfx.AL_REVERB_DECAY_HFLIMIT, limit ? AL11.AL_TRUE : AL11.AL_FALSE);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffecti(getName(), EXTEfx.AL_REVERB_DECAY_HFLIMIT, limit ? AL11.AL_TRUE : AL11.AL_FALSE);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -232,8 +285,15 @@ public class ReverbEffect extends OALEffect
 	public final void setReflectionDelay(float reflectionDelay)
 	{
 		this.reflectionDelay = reflectionDelay;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_REFLECTIONS_DELAY, MathUtils.clampValue(reflectionDelay, EXTEfx.AL_REVERB_MIN_REFLECTIONS_DELAY, EXTEfx.AL_REVERB_MAX_REFLECTIONS_DELAY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_REFLECTIONS_DELAY,
+				MathUtils.clampValue(reflectionDelay, EXTEfx.AL_REVERB_MIN_REFLECTIONS_DELAY, EXTEfx.AL_REVERB_MAX_REFLECTIONS_DELAY)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -251,8 +311,15 @@ public class ReverbEffect extends OALEffect
 	public final void setReflectionGain(float reflectionGain)
 	{
 		this.reflectionGain = reflectionGain;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_REFLECTIONS_GAIN, MathUtils.clampValue(reflectionGain, EXTEfx.AL_REVERB_MIN_REFLECTIONS_GAIN, EXTEfx.AL_REVERB_MAX_REFLECTIONS_GAIN));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_REFLECTIONS_GAIN, 
+				MathUtils.clampValue(reflectionGain, EXTEfx.AL_REVERB_MIN_REFLECTIONS_GAIN, EXTEfx.AL_REVERB_MAX_REFLECTIONS_GAIN)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -270,8 +337,15 @@ public class ReverbEffect extends OALEffect
 	public final void setRoomRolloffFactor(float roomRolloffFactor)
 	{
 		this.roomRolloffFactor = roomRolloffFactor;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_ROOM_ROLLOFF_FACTOR, MathUtils.clampValue(roomRolloffFactor, EXTEfx.AL_REVERB_MIN_ROOM_ROLLOFF_FACTOR, EXTEfx.AL_REVERB_MAX_ROOM_ROLLOFF_FACTOR));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_ROOM_ROLLOFF_FACTOR, 
+				MathUtils.clampValue(roomRolloffFactor, EXTEfx.AL_REVERB_MIN_ROOM_ROLLOFF_FACTOR, EXTEfx.AL_REVERB_MAX_ROOM_ROLLOFF_FACTOR)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -289,8 +363,15 @@ public class ReverbEffect extends OALEffect
 	public final void setLateDelay(float lateDelay)
 	{
 		this.lateDelay = lateDelay;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_LATE_REVERB_DELAY, MathUtils.clampValue(lateDelay, EXTEfx.AL_REVERB_MIN_LATE_REVERB_DELAY, EXTEfx.AL_REVERB_MAX_LATE_REVERB_DELAY));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_LATE_REVERB_DELAY, 
+				MathUtils.clampValue(lateDelay, EXTEfx.AL_REVERB_MIN_LATE_REVERB_DELAY, EXTEfx.AL_REVERB_MAX_LATE_REVERB_DELAY)
+			);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -308,8 +389,15 @@ public class ReverbEffect extends OALEffect
 	public final void setLateGain(float lateGain)
 	{
 		this.lateGain = lateGain;
-		EXTEfx.alEffectf(getName(), EXTEfx.AL_REVERB_LATE_REVERB_GAIN, MathUtils.clampValue(lateGain, EXTEfx.AL_REVERB_MIN_LATE_REVERB_GAIN, EXTEfx.AL_REVERB_MAX_LATE_REVERB_GAIN));
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alEffectf(
+				getName(), 
+				EXTEfx.AL_REVERB_LATE_REVERB_GAIN, 
+				MathUtils.clampValue(lateGain, EXTEfx.AL_REVERB_MIN_LATE_REVERB_GAIN, EXTEfx.AL_REVERB_MAX_LATE_REVERB_GAIN)
+			);
+			errorCheck();
+		}
 	}
 
 }

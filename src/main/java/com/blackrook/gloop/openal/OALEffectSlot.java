@@ -13,11 +13,11 @@ import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.EXTEfx;
 import org.lwjgl.system.MemoryStack;
 
+import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
 
 /**
  * Auxiliary Effect Slot for enforcing effect mixing rules.
- * TODO: Context locking.
  * @author Matthew Tropiano
  */
 public class OALEffectSlot extends OALObject
@@ -41,12 +41,15 @@ public class OALEffectSlot extends OALObject
 	protected int allocate() throws SoundException
 	{
 		int out;
-		clearError();
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
 			IntBuffer buf = stack.mallocInt(1);
-			EXTEfx.alGenAuxiliaryEffectSlots(buf);
-			errorCheck();
+			try (ContextLock lock = requestContext())
+			{
+				clearError();
+				EXTEfx.alGenAuxiliaryEffectSlots(buf);
+				errorCheck();
+			}
 			out = buf.get(0);
 		}
 		return out;
@@ -55,9 +58,12 @@ public class OALEffectSlot extends OALObject
 	@Override
 	protected final void free() throws SoundException
 	{
-		clearError();
-		EXTEfx.alDeleteAuxiliaryEffectSlots(getName());
-		errorCheck();
+		try (ContextLock lock = requestContext())
+		{
+			clearError();
+			EXTEfx.alDeleteAuxiliaryEffectSlots(getName());
+			errorCheck();
+		}
 	}
 
 	/**
@@ -67,8 +73,11 @@ public class OALEffectSlot extends OALObject
 	public void setEffect(OALEffect effect)
 	{
 		this.effect = effect;
-		EXTEfx.alAuxiliaryEffectSloti(getName(), EXTEfx.AL_EFFECTSLOT_EFFECT, effect == null ? EXTEfx.AL_EFFECT_NULL : effect.getName());
-		errorCheck();
+		try (ContextLock lock = requestContext())
+		{
+			EXTEfx.alAuxiliaryEffectSloti(getName(), EXTEfx.AL_EFFECTSLOT_EFFECT, effect == null ? EXTEfx.AL_EFFECT_NULL : effect.getName());
+			errorCheck();
+		}
 	}
 	
 	/**
@@ -105,8 +114,11 @@ public class OALEffectSlot extends OALObject
 	public void setGain(float gain)
 	{
 		slotGain = gain;
-		EXTEfx.alAuxiliaryEffectSlotf(getName(), EXTEfx.AL_EFFECTSLOT_GAIN, gain);
-		errorCheck();
+		try (ContextLock lock = requestContext())
+		{
+			EXTEfx.alAuxiliaryEffectSlotf(getName(), EXTEfx.AL_EFFECTSLOT_GAIN, gain);
+			errorCheck();
+		}
 	}
 
 	/** 
@@ -125,8 +137,11 @@ public class OALEffectSlot extends OALObject
 	public final void setAutoUpdating(boolean autoUpdate)
 	{
 		this.autoUpdating = autoUpdate;
-		EXTEfx.alAuxiliaryEffectSloti(getName(), EXTEfx.AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, autoUpdate ? AL11.AL_TRUE : AL11.AL_FALSE);
-		errorCheck();
+		try (ContextLock lock = requestContext()) 
+		{
+			EXTEfx.alAuxiliaryEffectSloti(getName(), EXTEfx.AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, autoUpdate ? AL11.AL_TRUE : AL11.AL_FALSE);
+			errorCheck();
+		}
 	}
 
 }
