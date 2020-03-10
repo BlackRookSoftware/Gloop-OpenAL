@@ -75,7 +75,7 @@ public final class OALSystem
 	 * is unnecessary since OpenAL is thread-safe already and caring about a 
 	 * critical section, if any, is moot if there is only one context to manage.
 	 */
-	public static class NoOpContextLock implements ContextLock
+	private static class NoOpContextLock implements ContextLock
 	{
 		@Override
 		public void lock() 
