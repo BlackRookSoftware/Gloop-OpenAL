@@ -36,7 +36,7 @@ public class OALDevice extends OALHandle
 	private OALSystem system;
 	/** The device name. */
 	private String name;
-	/** The device name. */
+	/** The device context capabilities. */
 	private ALCCapabilities capabilities;
 	
 	/** This object's handle. */
