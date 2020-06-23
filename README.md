@@ -7,6 +7,12 @@ Copyright (c) 2020 Black Rook Software.
 [Latest Release](https://github.com/BlackRookSoftware/Gloop-OpenAL/releases/latest)
 
 
+### NOTICE
+
+This library is currently in **EXPERIMENTAL** status. This library's API
+may change many times in different ways over the course of its development!
+
+
 ### Required Libraries
 
 [LightWeight Java Game Library (LWJGL)](https://www.lwjgl.org/download) 3.0.0+  
