@@ -36,12 +36,15 @@ public class JSPISoundHandle
 	private File dataFile;
 	/** URL resource. */
 	private URL dataURL;
+	/** Byte resource. */
+	private ByteArrayInputStream dataStream;
 	
 	protected JSPISoundHandle()
 	{
 		this.dataName = null;
 		this.dataFile = null;
 		this.dataURL = null;
+		this.dataStream = null;
 	}
 	
 	/**
@@ -81,6 +84,21 @@ public class JSPISoundHandle
 		dataName = url.toString();
 		dataURL = url;
 		audioFileFormat = AudioSystem.getAudioFileFormat(dataURL);
+	}
+
+	/**
+	 * Creates a handle from an array of sound data.
+	 * @param name the handle name.
+	 * @param data the data.
+	 * @throws IOException if the stream can't be read.
+	 * @throws UnsupportedAudioFileException if the audio format is not recognized.
+	 */
+	public JSPISoundHandle(String name, byte[] data) throws IOException, UnsupportedAudioFileException
+	{
+		dataName = name;
+		dataStream = new ByteArrayInputStream(data);
+		audioFileFormat = AudioSystem.getAudioFileFormat(dataStream);
+		dataStream.reset();
 	}
 
 	/**
@@ -127,8 +145,13 @@ public class JSPISoundHandle
 	{
 		if (dataFile != null)
 			return AudioSystem.getAudioInputStream(dataFile);
-		else
+		else if (dataURL != null)
 			return AudioSystem.getAudioInputStream(dataURL);
+		else
+		{
+			dataStream.reset();
+			return AudioSystem.getAudioInputStream(dataStream);
+		}
 	}
 	
 	/**
