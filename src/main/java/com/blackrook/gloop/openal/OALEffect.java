@@ -16,7 +16,6 @@ import com.blackrook.gloop.openal.OALSystem.ContextLock;
 
 /**
  * Effect object for OpenAL sources.
- * TODO: Context locking (plus all effects).
  * @author Matthew Tropiano
  */
 public abstract class OALEffect extends OALObject
