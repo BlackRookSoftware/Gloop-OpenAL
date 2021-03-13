@@ -32,14 +32,14 @@ public final class OALSystem
 		 * This is called by the time the user receives it, 
 		 * and serves as a means for obscuring a locking mechanism. 
 		 */
-		public void lock();
+		void lock();
 		
 		/**
 		 * <b>YOU SHOULD NOT NEED TO CALL THIS METHOD DIRECTLY.</b> 
 		 * This is meant to be automatically called from a try-with-resources. 
 		 */
 		@Override
-		public void close();
+		void close();
 	}
 	
 	/**

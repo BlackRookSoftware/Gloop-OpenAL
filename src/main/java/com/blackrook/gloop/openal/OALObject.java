@@ -104,7 +104,7 @@ public abstract class OALObject
 	protected abstract void free();
 	
 	/**
-	 * Sets a new context as current, in order hold a context as current for an AL call.
+	 * Sets a new context as current, in order to hold a context as current for an AL call.
 	 * @return a context lock for notifying releasing control of the thread.
 	 */
 	protected ContextLock requestContext()
