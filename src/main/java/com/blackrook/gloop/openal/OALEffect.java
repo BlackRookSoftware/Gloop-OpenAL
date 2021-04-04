@@ -7,10 +7,7 @@
  ******************************************************************************/
 package com.blackrook.gloop.openal;
 
-import java.nio.IntBuffer;
-
 import org.lwjgl.openal.EXTEfx;
-import org.lwjgl.system.MemoryStack;
 
 import com.blackrook.gloop.openal.OALSystem.ContextLock;
 
@@ -34,16 +31,11 @@ public abstract class OALEffect extends OALObject
 	protected final int allocate()
 	{
 		int out;
-		try (MemoryStack stack = MemoryStack.stackPush())
+		try (ContextLock lock = requestContext()) 
 		{
-			IntBuffer buf = stack.mallocInt(1);
-			try (ContextLock lock = requestContext()) 
-			{
-				clearError();
-				EXTEfx.alGenEffects(buf);
-				errorCheck();
-			}
-			out = buf.get(0);
+			clearError();
+			out = EXTEfx.alGenEffects();
+			errorCheck();
 		}
 		return out;
 	}

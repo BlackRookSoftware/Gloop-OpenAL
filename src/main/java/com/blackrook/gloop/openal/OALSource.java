@@ -7,14 +7,12 @@
  ******************************************************************************/
 package com.blackrook.gloop.openal;
 
-import java.nio.IntBuffer;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.EXTEfx;
-import org.lwjgl.system.MemoryStack;
 
 import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
@@ -113,16 +111,11 @@ public final class OALSource extends OALObject
 	protected final int allocate()
 	{
 		int out;
-		try (MemoryStack stack = MemoryStack.stackPush())
+		try (ContextLock lock = requestContext()) 
 		{
-			IntBuffer buf = stack.mallocInt(1);
-			try (ContextLock lock = requestContext()) 
-			{
-				clearError();
-				AL11.alGenSources(buf);
-				errorCheck();
-			}
-			out = buf.get(0);
+			clearError();
+			out = AL11.alGenSources();
+			errorCheck();
 		}
 		return out;
 	}

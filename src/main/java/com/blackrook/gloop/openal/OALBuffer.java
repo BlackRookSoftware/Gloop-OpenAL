@@ -10,12 +10,10 @@ package com.blackrook.gloop.openal;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 import javax.sound.sampled.AudioFormat;
 
 import org.lwjgl.openal.AL11;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import com.blackrook.gloop.openal.JSPISoundHandle.Decoder;
@@ -130,16 +128,11 @@ public final class OALBuffer extends OALObject
 	protected final int allocate()
 	{
 		int out;
-		try (MemoryStack stack = MemoryStack.stackPush())
+		try (ContextLock lock = requestContext()) 
 		{
-			IntBuffer buf = stack.mallocInt(1);
-			try (ContextLock lock = requestContext()) 
-			{
-				clearError();
-				AL11.alGenBuffers(buf);
-				errorCheck();
-			}
-			out = buf.get(0);
+			clearError();
+			out = AL11.alGenBuffers();
+			errorCheck();
 		}
 		return out;
 	}
