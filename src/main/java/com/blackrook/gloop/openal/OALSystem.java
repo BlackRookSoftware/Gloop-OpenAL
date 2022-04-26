@@ -45,7 +45,7 @@ public final class OALSystem
 	/**
 	 * A way to lock a current context down for a series of calls to OpenAL.
 	 * The "AL" (not "ALC") calls rely on current context, so while the call is made,
-	 * it cannot change when a context is being altered through them.
+	 * it cannot change while a context is being altered through them.
 	 */
 	private static class ReentrantContextLock implements ContextLock
 	{
