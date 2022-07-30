@@ -108,7 +108,7 @@ public final class OALTest
 	private static boolean loadBuffer(JSPISoundHandle.Decoder decoder, OALBuffer buffer, ByteBuffer buf) throws IOException 
 	{
 		buf.clear();
-		if (decoder.readPCMData(buf) < 0)
+		if (decoder.readPCMBytes(buf) < 0)
 			return false;
 		buf.flip();
 		buffer.setData(buf);

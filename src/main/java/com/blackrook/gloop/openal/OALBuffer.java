@@ -109,7 +109,7 @@ public final class OALBuffer extends OALObject
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		byte[] by = BYTEBUFFER.get();
 		int amt;
-		while ((amt = decoder.readPCMData(by, 0)) >= 0)
+		while ((amt = decoder.readPCMBytes(by)) > 0)
 			bos.write(by, 0, amt);
 		setData(bos.toByteArray());
 	}

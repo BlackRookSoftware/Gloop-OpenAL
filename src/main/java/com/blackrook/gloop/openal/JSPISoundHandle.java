@@ -1,8 +1,8 @@
 /*******************************************************************************
- * Copyright (c) 2020 Black Rook Software
+ * Copyright (c) 2015-2022 Matt Tropiano
  * This program and the accompanying materials are made available under the 
  * terms of the GNU Lesser Public License v2.1 which accompanies this 
- * distribution, and is available at 
+ * distribution, and is available at
  * http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
  ******************************************************************************/
 package com.blackrook.gloop.openal;
@@ -27,6 +27,8 @@ import com.blackrook.gloop.openal.struct.IOUtils;
  */
 public class JSPISoundHandle
 {
+	private static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[44100]);
+	
 	/** Name of this data stream. */
 	private String dataName;
 	/** Audio file format. */
@@ -36,15 +38,15 @@ public class JSPISoundHandle
 	private File dataFile;
 	/** URL resource. */
 	private URL dataURL;
-	/** Byte resource. */
-	private ByteArrayInputStream dataStream;
+	/** URL resource. */
+	private byte[] dataBytes;
 	
 	protected JSPISoundHandle()
 	{
 		this.dataName = null;
 		this.dataFile = null;
 		this.dataURL = null;
-		this.dataStream = null;
+		this.dataBytes = null;
 	}
 	
 	/**
@@ -87,18 +89,17 @@ public class JSPISoundHandle
 	}
 
 	/**
-	 * Creates a handle from an array of sound data.
-	 * @param name the handle name.
-	 * @param data the data.
+	 * Opens a URL for reading.
+	 * @param path the original path. 
+	 * @param bytes the byte data to decode.
 	 * @throws IOException if the stream can't be read.
 	 * @throws UnsupportedAudioFileException if the audio format is not recognized.
 	 */
-	public JSPISoundHandle(String name, byte[] data) throws IOException, UnsupportedAudioFileException
+	public JSPISoundHandle(String path, byte[] bytes) throws IOException, UnsupportedAudioFileException
 	{
-		dataName = name;
-		dataStream = new ByteArrayInputStream(data);
-		audioFileFormat = AudioSystem.getAudioFileFormat(dataStream);
-		dataStream.reset();
+		dataName = path;
+		dataBytes = bytes;
+		audioFileFormat = AudioSystem.getAudioFileFormat(new ByteArrayInputStream(dataBytes));
 	}
 
 	/**
@@ -143,15 +144,12 @@ public class JSPISoundHandle
 	// Creates the stream for the decoder.
 	private AudioInputStream startStream() throws IOException, UnsupportedAudioFileException
 	{
-		if (dataFile != null)
+		if (dataBytes != null)
+			return AudioSystem.getAudioInputStream(new ByteArrayInputStream(dataBytes));
+		else if (dataFile != null)
 			return AudioSystem.getAudioInputStream(dataFile);
-		else if (dataURL != null)
-			return AudioSystem.getAudioInputStream(dataURL);
 		else
-		{
-			dataStream.reset();
-			return AudioSystem.getAudioInputStream(dataStream);
-		}
+			return AudioSystem.getAudioInputStream(dataURL);
 	}
 	
 	/**
@@ -168,10 +166,8 @@ public class JSPISoundHandle
 		private AudioFormat decodedAudioFormat;
 		/** Audio input stream to decode to. */
 		private AudioInputStream decodedAudioStream;
-		/** Bytes per sample of decoded data buffer. */
-		private byte[] decodedBytesPerSample;
 		
-		private Decoder() throws IOException, UnsupportedAudioFileException
+		Decoder() throws IOException, UnsupportedAudioFileException
 		{
 			audioStream = startStream();
 			audioFormat = audioStream.getFormat();
@@ -185,71 +181,65 @@ public class JSPISoundHandle
 				ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
 			);
 			decodedAudioStream = AudioSystem.getAudioInputStream(decodedAudioFormat, audioStream);
-			decodedBytesPerSample = new byte[(decodedAudioFormat.getSampleSizeInBits() >> 3) * decodedAudioFormat.getChannels()];
 		}
 		
 		/**
-		 * Reads a bunch of decoded PCM data into the byte buffer.
-		 * Bytes are loaded into the buffer until the end is reached or the end of the PCM data is reached.
-		 * The data is aligned to the amount of decoded bytes per sample, as a sanitation measure.
-		 * @param buffer the byte buffer.
-		 * @return the amount of bytes written to the buffer, or -1 if the end of the stream was reached before data could be written.
+		 * Reads a bunch of decoded bytes into the byte buffer, up to its current capacity.
+		 * @param bb the byte buffer.
+		 * @return how many bytes were read/written.
 		 * @throws IOException if the data can't be decompressed.
 		 */
-		public int readPCMData(ByteBuffer buffer) throws IOException
+		public int readPCMBytes(ByteBuffer bb) throws IOException
 		{
-			int b = 0;
-			int out = 0;
-			int s = 0;
-			while (buffer.remaining() >= decodedBytesPerSample.length && (b = decodedAudioStream.read()) >= 0)
+			int i = 0;
+			int buf = 0;
+			int max = bb.remaining();
+			byte[] b = BUFFER.get();
+			if (b.length < max)
 			{
-				decodedBytesPerSample[s++] = (byte)b;
-				if (s == decodedBytesPerSample.length)
-				{
-					buffer.put(decodedBytesPerSample);
-					out += decodedBytesPerSample.length;
-					s = 0;
-				}
+				b = new byte[max];
+				BUFFER.set(b);
 			}
 			
-			if (b < 0 && out == 0)
-				return -1;
-
-			return out;
-		}
-
-		/**
-		 * Reads a bunch of decoded PCM data into the byte array.
-		 * Bytes are loaded into the buffer until the end is reached or the end of the PCM data is reached.
-		 * The data is aligned to the amount of decoded bytes per sample, as a sanitation measure.
-		 * @param arr the byte array.
-		 * @param offset the offset into the array.
-		 * @return the amount of bytes written to the array, or -1 if the end of the stream was reached before data could be written.
-		 * @throws IOException if the data can't be decompressed.
-		 */
-		public int readPCMData(byte[] arr, int offset) throws IOException
-		{
-			int b = 0;
-			int out = 0;
-			int s = 0;
-			while (arr.length - (offset + out) >= decodedBytesPerSample.length && (b = decodedAudioStream.read()) >= 0)
+			while (i < max)
 			{
-				decodedBytesPerSample[s++] = (byte)b;
-				if (s == decodedBytesPerSample.length)
+				buf = decodedAudioStream.read(b, 0, b.length - i);
+				if (buf > 0)
 				{
-					System.arraycopy(decodedBytesPerSample, 0, arr, offset + out, decodedBytesPerSample.length);
-					out += decodedBytesPerSample.length;
-					s = 0;
+					i += buf;
+					bb.put(b, 0, buf);
 				}
-				arr[offset + out] = (byte)b;
-				out++;
+				else 
+					break;
 			}
 
-			return out;
+			return i;
 		}
 
 		/**
-		 * @return the audio format specs for the source file.
+		 * Reads a bunch of decoded bytes into the byte array.
+		 * @param b	the byte array.
+		 * @return how many bytes were written.
+		 * @throws IOException if the data can't be decompressed.
+		 */
+		public int readPCMBytes(byte[] b) throws IOException
+		{
+			int i = 0;
+			int buf = 0;
+			while (i != b.length)
+			{
+				buf = decodedAudioStream.read(b, i, b.length-i);
+				if (buf != -1)
+					i += buf;
+				else 
+					break;
+			}
+
+			return i;
+		}
+
+		/**
+		 * @return the audio format specs.
 		 * @see AudioFormat
 		 */
 		public final AudioFormat getFormat()
@@ -258,7 +248,7 @@ public class JSPISoundHandle
 		}
 		
 		/**
-		 * @return the audio file format specs for the source file.
+		 * @return the audio file format specs.
 		 * @see AudioFileFormat
 		 */
 		public final AudioFileFormat getFileFormat()
@@ -267,29 +257,13 @@ public class JSPISoundHandle
 		}
 
 		/**
-		 * @return the audio format specs for what this decodes to.
+		 * @return the decodedAudioFormat
 		 */
 		public final AudioFormat getDecodedAudioFormat()
 		{
 			return decodedAudioFormat;
 		}
 		
-		/**
-		 * @return the calculated decoded bytes per sample.
-		 */
-		public int getDecodedBytesPerSample() 
-		{
-			return decodedBytesPerSample.length;
-		}
-		
-		/**
-		 * @return the open audio stream for decoded data.
-		 */
-		public InputStream getDecodedStream()
-		{
-			return decodedAudioStream;
-		}
-
 		/**
 		 * Closes the decoder.
 		 * @throws IOException if an error occurred during close.
