@@ -15,7 +15,7 @@ import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.struct.MathUtils;
 
 /**
- * Echo effect for sound sources.
+ * Echo/Delay effect for sound sources.
  * @author Matthew Tropiano
  */
 public class EchoEffect extends OALEffect
