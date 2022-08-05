@@ -17,4 +17,9 @@ public interface SoundScapeType
 	 */
 	SoundReverbType getReverb();
 
+	/**
+	 * @return the occlusion factors to use, if any. Can be null.
+	 */
+	SoundOcclusionType getOcclusion();
+
 }

@@ -46,4 +46,10 @@ public interface SoundGroupType
 	 * @return if the sounds in this group are supposed to be played from the observer always.
 	 */
 	boolean isZeroPosition();
+	
+	/**
+	 * @return the total amount of voices that this group can use at once.
+	 */
+	int getMaximumVoices();
+
 }

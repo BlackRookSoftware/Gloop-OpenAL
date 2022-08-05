@@ -21,4 +21,9 @@ public interface SoundCategoryType
 	 */
 	SoundRolloffType getHighPassRolloffType();
 
+	/**
+	 * @return the rolloff type to use for the sound cone, if any. Distances are in degrees. Can be null.
+	 */
+	SoundRolloffType getConicRolloffType();
+
 }

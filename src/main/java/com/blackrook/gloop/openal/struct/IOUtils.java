@@ -5,6 +5,7 @@
  ******************************************************************************/
 package com.blackrook.gloop.openal.struct;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,19 @@ public final class IOUtils
 {
 	private IOUtils() {}
 	
+	/**
+	 * Retrieves the binary contents of a stream until it hits the end of the stream.
+	 * @param in the input stream to use.
+	 * @return an array of len bytes that make up the data in the stream.
+	 * @throws IOException	if the read cannot be done.
+	 */
+	public static byte[] getBinaryContents(InputStream in) throws IOException
+	{
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		relay(in, bos, 8192);
+		return bos.toByteArray();
+	}
+
 	/**
 	 * Reads from an input stream, reading in a consistent set of data
 	 * and writing it to the output stream. The read/write is buffered

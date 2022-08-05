@@ -12,25 +12,17 @@ public interface SoundOcclusionType
 	float getMaximumWidth();
 
 	/**
-	 * Calculates the occlusion scalar.
-	 * @param width the width in world units. 
-	 * @return the calculated occlusion scalar (0 = no occlusion, 1 = maximum occlusion).
+	 * @return the maximum occlusion attenuation.
 	 */
-	default float getOcclusionScalar(float width)
-	{
-		return getMaximumWidth() == 0.0f ? 0.0f : width / getMaximumWidth();
-	}
+	float getGain();
+	
+	/**
+	 * @return the maximum occlusion attenuation for low pass.
+	 */
+	float getLowPassGain();
 
 	/**
-	 * No occlusion.
+	 * @return the maximum occlusion attenuation for high pass.
 	 */
-	static SoundOcclusionType NONE = new SoundOcclusionType()
-	{
-		@Override
-		public float getMaximumWidth()
-		{
-			return 0f;
-		}
-	};
-	
+	float getHighPassGain();
 }
