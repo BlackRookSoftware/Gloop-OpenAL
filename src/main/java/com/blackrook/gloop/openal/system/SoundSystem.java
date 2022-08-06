@@ -71,12 +71,6 @@ public class SoundSystem
 	
 	private SoundCache cache;
 	
-	private OALEffectSlot echoEffectSlot;
-	private OALEffectSlot reverbEffectSlot;
-
-	private EchoEffect echoEffect;
-	private ReverbEffect reverbEffect;
-
 	private String vendorName;
 	private String versionName;
 	private String rendererName;
@@ -104,7 +98,7 @@ public class SoundSystem
 	/** Deque of active streams. */
 	private Deque<Voice> activeStreams;
 	/** Active stream updater thread. */
-	private Streamer streamer;
+	private StreamerThread streamer;
 	/** Active processor thread. */
 	private ProcessorThread processor;
 
@@ -148,19 +142,6 @@ public class SoundSystem
 
 		this.cache = new SoundCache(cacheSize);
 		
-		// Make shared effects.
-		
-		this.echoEffectSlot = context.createEffectSlot();
-		this.reverbEffectSlot = context.createEffectSlot();
-		
-		this.echoEffect = context.createEchoEffect();
-		this.reverbEffect = context.createReverbEffect();
-		
-		this.echoEffectSlot.setAutoUpdating(true);
-		this.echoEffectSlot.setEffect(echoEffect);
-		this.reverbEffectSlot.setAutoUpdating(true);
-		this.reverbEffectSlot.setEffect(reverbEffect);
-		
 		this.vendorName = context.getVendorName();
 		this.versionName = context.getVersionName();
 		this.rendererName = context.getRendererName();
@@ -181,10 +162,7 @@ public class SoundSystem
 
 		while (availableVoices.size() < voices)
 		{
-			Voice voice = new Voice();
-			voice.source = context.createSource();
-			voice.filter = context.createBandPassFilter();
-			voice.source.setFilter(voice.filter);
+			Voice voice = new Voice(context);
 			availableVoices.add(voice);
 		}
 
@@ -650,11 +628,43 @@ public class SoundSystem
 		event.initGain = 1f;
 		event.initPitch = 1f;
 		
-		synchronized (eventQueue)
-		{
-			eventQueue.add(event);
-		}
-		
+		enqueueEvent(event);
+	}
+	
+	/**
+	 * Plays a looping sound.
+	 * Be careful - you need to be able to stop this sound!
+	 * @param data the sound data.
+	 * @param group the sound group it plays under. 
+	 */
+	public void playLooping(SoundData data, SoundGroupType group)
+	{
+		playLooping(data, group, null, null, null);
+	}
+	
+	/**
+	 * Plays a looping sound.
+	 * Be careful - you need to be able to stop this sound!
+	 * @param data the sound data.
+	 * @param group the sound group it plays under. 
+	 * @param location the sound location in the world.
+	 */
+	public void playLooping(SoundData data, SoundGroupType group, SoundLocation location)
+	{
+		playLooping(data, group, null, location, null);
+	}
+	
+	/**
+	 * Plays a looping sound.
+	 * Be careful - you need to be able to stop this sound!
+	 * @param data the sound data.
+	 * @param group the sound group it plays under. 
+	 * @param category the sound rolloff category.
+	 * @param location the sound location in the world.
+	 */
+	public void playLooping(SoundData data, SoundGroupType group, SoundCategoryType category, SoundLocation location)
+	{
+		playLooping(data, group, category, location, null);
 	}
 	
 	/**
@@ -668,18 +678,115 @@ public class SoundSystem
 	 */
 	public void playLooping(SoundData data, SoundGroupType group, SoundCategoryType category, SoundLocation location, Integer channel)
 	{
-		// TODO Finish this.
+		Event event = new Event();
+		event.type = Event.Type.PLAY_LOOP;
+		event.channel = channel;
+		event.location = location;
+		event.category = category;
+		event.group = group;
+		event.sound = data;
+		
+		event.initGain = 1f;
+		event.initPitch = 1f;
+		
+		enqueueEvent(event);
 	}
 	
 	/**
-	 * Processes sound events and system changes.
+	 * Pauses all instances of sounds playing in a group.
+	 * @param group the group object.
 	 */
-	private void update()
+	public void pauseGroup(SoundGroup group)
 	{
-		updateVoices();
-		updateEnvironment();
+		Event event = new Event();
+		event.type = Event.Type.PAUSE;
+		event.group = group;
+		enqueueEvent(event);
 	}
-
+	
+	/**
+	 * Pauses all instances of sounds playing on a location.
+	 * @param location the location object.
+	 */
+	public void pauseLocation(SoundLocation location)
+	{
+		Event event = new Event();
+		event.type = Event.Type.PAUSE;
+		event.location = location;
+		enqueueEvent(event);
+	}
+	
+	/**
+	 * Resumes all instances of sounds playing in a group.
+	 * @param group the group object.
+	 */
+	public void resumeGroup(SoundGroup group)
+	{
+		Event event = new Event();
+		event.type = Event.Type.RESUME;
+		event.group = group;
+		enqueueEvent(event);
+	}
+	
+	/**
+	 * Resumes all instances of sounds playing on a location.
+	 * @param location the location object.
+	 */
+	public void resumeLocation(SoundLocation location)
+	{
+		Event event = new Event();
+		event.type = Event.Type.RESUME;
+		event.location = location;
+		enqueueEvent(event);
+	}
+	
+	/**
+	 * Stops all instances of a sound playing.
+	 * @param data the sound data.
+	 */
+	public void stopSound(SoundData data)
+	{
+		Event event = new Event();
+		event.type = Event.Type.STOP;
+		event.sound = data;
+		enqueueEvent(event);
+	}
+	
+	/**
+	 * Stops all sounds in a group.
+	 * @param group the sound group.
+	 */
+	public void stopGroup(SoundGroup group)
+	{
+		Event event = new Event();
+		event.type = Event.Type.STOP;
+		event.group = group;
+		enqueueEvent(event);
+	}
+	
+	/**
+	 * Stops all sounds on a location.
+	 * @param location the location object.
+	 * @param channel the optional channel. 
+	 */
+	public void stopLocation(SoundLocation location, Integer channel)
+	{
+		Event event = new Event();
+		event.type = Event.Type.STOP;
+		event.location = location;
+		event.channel = channel;
+		enqueueEvent(event);
+	}
+	
+	private void enqueueEvent(Event event)
+	{
+		// lock queue during write.
+		synchronized (eventQueue)
+		{
+			eventQueue.add(event);
+		}		
+	}
+	
 	/**
 	 * Updates the events pending to be processed.
 	 * Called by update(), but exposed to developers here for
@@ -723,24 +830,8 @@ public class SoundSystem
 		while (it.hasNext())
 			updateVoice(it.next());
 		
-		cleanUpDeadVoices();
-		updateVoiceNanos = System.nanoTime() - nanotime;
-	}
-	
-	/**
-	 * Updates the environment (soundscape).
-	 */
-	private void updateEnvironment()
-	{
-		// TODO: Finish this.
-	}
-
-	/**
-	 * Finds dead used voices and frees them.
-	 */
-	private void cleanUpDeadVoices()
-	{
-		Iterator<Voice> it = usedVoices.iterator();
+		// Clean up dead voices.
+		it = usedVoices.iterator();
 		while (it.hasNext())
 		{
 			Voice voice = it.next();
@@ -753,6 +844,8 @@ public class SoundSystem
 
 		while (!deadVoices.isEmpty())
 			deallocateVoice(deadVoices.pollFirst());
+
+		updateVoiceNanos = System.nanoTime() - nanotime;
 	}
 	
 	/**
@@ -768,7 +861,7 @@ public class SoundSystem
 		SoundLocation location = event.location;
 		Integer channel = event.channel;
 		
-		Voice out = null;
+		final Voice out;
 
 		// actor clear?
 		if (location != null && channel != null)
@@ -808,12 +901,14 @@ public class SoundSystem
 		
 		if (!availableVoices.isEmpty())
 			out = availableVoices.pollFirst();
+		else
+			out = null;
 		
 		if (out == null)
 			return null;
 
 		try {
-			
+			listeners.forEach((listener) -> listener.onVoiceAllocated(out));
 			prepareVoice(out, data);
 			
 			// sound stream set already, if any.
@@ -882,8 +977,6 @@ public class SoundSystem
 			}
 			
 			startStreamer();
-			
-			listeners.forEach((listener) -> listener.onStreamThreadStarted());
 		}
 		// not a stream
 		else
@@ -902,11 +995,6 @@ public class SoundSystem
 		
 		voice.data = sound;
 
-		// Set up filters/effects.
-		voice.source.setFilter(voice.filter);
-		voice.source.setEffectSlot(0, echoEffectSlot);
-		voice.source.setEffectSlot(1, reverbEffectSlot);
-		
 		listeners.forEach((listener) -> listener.onVoicePrepared(voice));
 	}
 	
@@ -917,13 +1005,9 @@ public class SoundSystem
 	private void deallocateVoice(Voice voice)
 	{
 		voice.source.stop();
-		voice.source.setEffectSlot(1, null);
-		voice.source.setEffectSlot(0, null);
-		voice.source.setFilter(null);
-		voice.source.setBuffer(null);
 		voice.reset();
-		
 		deregisterVoice(voice);
+		listeners.forEach((listener) -> listener.onVoiceDeallocated(voice));
 	}
 	
 	/**
@@ -969,6 +1053,8 @@ public class SoundSystem
 		{
 			OALSource source = voice.source;
 			BandPassFilter filter = voice.filter;
+			OALEffectSlot echoSlot = voice.effectSlot0;
+			OALEffectSlot reverbSlot = voice.effectSlot1;
 
 			source.setPosition(update.sourceX, update.sourceY, update.sourceZ);
 			source.setGain(update.gain);
@@ -978,6 +1064,10 @@ public class SoundSystem
 			filter.setHFGain(update.gainHF);
 			filter.setLFGain(update.gainLF);
 			source.setFilter(filter); // force update
+			
+			echoSlot.setGain(update.gainEffect);
+			reverbSlot.setGain(update.gainEffect);
+			
 			return true;
 		}
 		else
@@ -998,6 +1088,9 @@ public class SoundSystem
 		{
 			case PLAY:
 				handlePlay(event);
+				break;
+			case PLAY_LOOP:
+				handlePlayLoop(event);
 				break;
 			case STOP:
 				handleStop(event);
@@ -1115,6 +1208,28 @@ public class SoundSystem
 		Voice voice = allocateVoice(event);
 		if (voice != null)
 		{
+			voice.source.setLooping(false);
+			voice.source.play();
+		}
+		else if (event.sound.isAlwaysPlayed())
+		{
+			processDelay.add(event);
+			return false;
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Handles a sound play loop event.
+	 * Returns true if handled, false if this is to be belayed.
+	 */
+	private boolean handlePlayLoop(Event event)
+	{
+		Voice voice = allocateVoice(event);
+		if (voice != null)
+		{
+			voice.source.setLooping(true);
 			voice.source.play();
 		}
 		else if (event.sound.isAlwaysPlayed())
@@ -1273,6 +1388,8 @@ public class SoundSystem
 		update.pitch = voicePitch * soundPitch * dopplerPitch;
 		update.gainHF = rolloffHFGain * occlusionHFGain;
 		update.gainLF = rolloffLFGain * occlusionLFGain;
+		
+		update.gainEffect = 0f;
 	}
 
 	private static float gainFactor(SoundRolloffType rolloff, float distance)
@@ -1347,7 +1464,7 @@ public class SoundSystem
 	{
 		if (streamer != null)
 			return;
-		streamer = new Streamer();
+		streamer = new StreamerThread();
 		streamer.start();
 	}
 	
@@ -1390,6 +1507,8 @@ public class SoundSystem
 		void onVoicePlayed(Voice voice);
 		void onVoiceStopped(Voice voice);
 		void onVoiceStreamStarted(Voice voice);
+		void onVoiceAllocated(Voice voice);
+		void onVoiceDeallocated(Voice voice);
 		void onStreamThreadStarted();
 		void onStreamThreadEnded();
 		void onSoundCached(SoundData data);
@@ -1540,6 +1659,74 @@ public class SoundSystem
 		
 	}
 
+	public static class Voice
+	{
+		private OALSource source;
+		private BandPassFilter filter;
+		private OALEffectSlot effectSlot0;
+		private OALEffectSlot effectSlot1;
+		private EchoEffect echoEffect;
+		private ReverbEffect reverbEffect;
+	
+		private SoundData data;
+		private SoundCategoryType category;
+		private SoundGroupType group;
+		private SoundLocation location;
+		private Integer channel;
+		private float initGain;
+		private float initPitch;
+	
+		private SoundStream stream;
+		private boolean looping;
+	
+		private Voice(OALContext context)
+		{
+			this.source = context.createSource();
+			this.filter = context.createBandPassFilter();
+			this.source.setFilter(this.filter);
+			this.effectSlot0 = context.createEffectSlot();
+			this.effectSlot0.setAutoUpdating(true);
+			this.effectSlot1 = context.createEffectSlot();
+			this.effectSlot1.setAutoUpdating(true);
+			this.effectSlot0.setEffect(this.echoEffect = context.createEchoEffect());
+			this.effectSlot1.setEffect(this.reverbEffect = context.createReverbEffect());
+			this.source.setEffectSlot(0, this.effectSlot0);
+			this.source.setEffectSlot(1, this.effectSlot1);
+			reset();
+		}
+		
+		private void reset()
+		{
+			this.data = null;
+			this.category = null;
+			this.group = null;
+			this.location = null;
+			this.channel = null;
+			this.initGain = 1.0f;
+			this.initPitch = 1.0f;
+		}
+		
+		private void destroy()
+		{
+			source.setEffectSlot(1, null);
+			source.setEffectSlot(0, null);
+			effectSlot1.destroy();
+			effectSlot0.destroy();
+			reverbEffect.destroy();
+			echoEffect.destroy();
+			source.setFilter(null);
+			filter.destroy();
+			source.destroy();
+		}
+		
+		@Override
+		public String toString()
+		{
+			return source.toString();
+		}
+		
+	}
+
 	/**
 	 * The streamer object made for each streaming voice.  
 	 */
@@ -1639,6 +1826,8 @@ public class SoundSystem
 		
 		private ProcessorThread() 
 		{
+			setName("SoundSystem-Processor");
+			setDaemon(false);
 			this.keepAlive = true;
 		}
 		
@@ -1674,14 +1863,14 @@ public class SoundSystem
 	 * Kept alive if streams need updating.
 	 * This is to keep work off of the main update thread.
 	 */
-	private class Streamer extends Thread
+	private class StreamerThread extends Thread
 	{
 		private boolean killed;
 		
-		Streamer()
+		StreamerThread()
 		{
 			super();
-			setName("SoundStreamerThread");
+			setName("SoundSystem-Streamer");
 			setDaemon(true);
 		}
 		
@@ -2045,45 +2234,6 @@ public class SoundSystem
 		private Integer channel;
 		private float initGain;
 		private float initPitch;
-	}
-
-	private static class Voice
-	{
-		private OALSource source;
-		private BandPassFilter filter;
-
-		private SoundData data;
-		private SoundCategoryType category;
-		private SoundGroupType group;
-		private SoundLocation location;
-		private Integer channel;
-		private long age;
-		private float initGain;
-		private float initPitch;
-
-		private SoundStream stream;
-		private boolean looping;
-
-		private Voice()
-		{
-			reset();
-		}
-		
-		private void reset()
-		{
-			this.source = null;
-			this.filter = null;
-			
-			this.data = null;
-			this.category = null;
-			this.group = null;
-			this.location = null;
-			this.channel = null;
-			this.age = -1L;
-			this.initGain = 1.0f;
-			this.initPitch = 1.0f;
-		}
-		
 	}
 	
 }
