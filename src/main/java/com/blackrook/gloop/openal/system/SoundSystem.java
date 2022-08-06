@@ -18,6 +18,8 @@ import java.util.Set;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.lwjgl.BufferUtils;
+
 import com.blackrook.gloop.openal.JSPISoundHandle;
 import com.blackrook.gloop.openal.OALBuffer;
 import com.blackrook.gloop.openal.OALContext;
@@ -95,10 +97,6 @@ public class SoundSystem
 	private Map<SoundGroupType, Deque<Voice>> groupToVoicesMap;
 	private Map<SoundLocation, Deque<Voice>> locationToVoicesMap;
 
-	/** Deque of active streams. */
-	private Deque<Voice> activeStreams;
-	/** Active stream updater thread. */
-	private StreamerThread streamer;
 	/** Active processor thread. */
 	private ProcessorThread processor;
 
@@ -170,8 +168,6 @@ public class SoundSystem
 		this.groupToVoicesMap = new HashMap<>();
 		this.locationToVoicesMap = new HashMap<>();
 		
-		this.activeStreams = new LinkedList<>();
-		this.streamer = null;
 		this.processor = new ProcessorThread();
 		
 		this.soundScape = null;
@@ -913,6 +909,7 @@ public class SoundSystem
 			
 			// sound stream set already, if any.
 			
+			out.looping = event.type == Event.Type.PLAY_LOOP;
 			out.group = group;
 			out.location = location;
 			out.category = category;
@@ -969,14 +966,7 @@ public class SoundSystem
 			OALSource source = voice.source;
 			source.enqueueBuffers(ss.buffers);
 			voice.stream = ss;
-			
-			synchronized (activeStreams)
-			{
-				activeStreams.add(voice);
-				listeners.forEach((listener) -> listener.onVoiceStreamStarted(voice));
-			}
-			
-			startStreamer();
+			listeners.forEach((listener) -> listener.onVoiceStreamStarted(voice));
 		}
 		// not a stream
 		else
@@ -1067,6 +1057,21 @@ public class SoundSystem
 			
 			echoSlot.setGain(update.gainEffect);
 			reverbSlot.setGain(update.gainEffect);
+			
+			if (voice.stream != null)
+			{
+				try {
+					voice.stream.streamUpdate(voice);
+				} catch (UnsupportedAudioFileException e) {
+					listeners.forEach((listener) -> listener.onSoundUnsupportedError(voice.data, e));
+					stopVoice(voice);
+					return false;
+				} catch (IOException e) {
+					listeners.forEach((listener) -> listener.onSoundIOError(voice.data, e));
+					stopVoice(voice);
+					return false;
+				}
+			}
 			
 			return true;
 		}
@@ -1229,7 +1234,8 @@ public class SoundSystem
 		Voice voice = allocateVoice(event);
 		if (voice != null)
 		{
-			voice.source.setLooping(true);
+			// if stream, handled at stream level, else must be at source.
+			voice.source.setLooping(voice.looping && voice.stream == null);
 			voice.source.play();
 		}
 		else if (event.sound.isAlwaysPlayed())
@@ -1455,28 +1461,6 @@ public class SoundSystem
 			IOUtils.close(in);
 		}
 		return out;
-	}
-
-	/** 
-	 * Starts the streamer thread if it is not active. 
-	 */
-	private void startStreamer()
-	{
-		if (streamer != null)
-			return;
-		streamer = new StreamerThread();
-		streamer.start();
-	}
-	
-	/** 
-	 * Stops the streamer thread if it is active. 
-	 */
-	private void stopStreamer()
-	{
-		if (streamer == null)
-			return;
-		streamer.kill();
-		streamer = null;
 	}
 
 	/**
@@ -1736,7 +1720,7 @@ public class SoundSystem
 		protected JSPISoundHandle soundHandle;
 		protected JSPISoundHandle.Decoder decoderRef;
 	
-		protected byte[] bytebuffer;
+		protected ByteBuffer bytebuffer;
 		
 		SoundStream(JSPISoundHandle soundHandle) throws UnsupportedAudioFileException, IOException
 		{
@@ -1747,9 +1731,10 @@ public class SoundSystem
 			{
 				b.setSamplingRate((int)decoderFormat.getSampleRate());
 				b.setFormatByChannelsAndBits(decoderFormat.getChannels(), decoderFormat.getSampleSizeInBits());
-				// TODO: Make this approach better. I don't trust its memory efficiency.
-				int len = decoderRef.readPCMBytes(bytebuffer);
-				b.setData(ByteBuffer.wrap(bytebuffer, 0, len));
+				bytebuffer.clear();
+				decoderRef.readPCMBytes(bytebuffer);
+				bytebuffer.flip();
+				b.setData(bytebuffer);
 			}
 		}
 	
@@ -1773,38 +1758,43 @@ public class SoundSystem
 			if (bytebuffer == null)
 			{
 				int buffersize = (int)decoderFormat.getSampleRate() * decoderFormat.getChannels() * (decoderFormat.getSampleSizeInBits()/8);
-				bytebuffer = new byte[buffersize];
+				bytebuffer = BufferUtils.createByteBuffer(buffersize);
 			}
 		}
 		
 		/**
 		 * Updates the stream.
 		 * @param voice the playing voice.
-		 * @param source the source to update.
 		 * @return the amount of bytes loaded.
 		 * @throws UnsupportedAudioFileException if the audio file's format is not supported.
 		 * @throws IOException if the stream cannot be read.
 		 */
-		public int streamUpdate(Voice voice, OALSource source) throws UnsupportedAudioFileException, IOException
+		public int streamUpdate(Voice voice) throws UnsupportedAudioFileException, IOException
 		{
+			OALSource source = voice.source;
+			
 			int out = -1;
 			int p = source.getProcessedBufferCount();
 			while (p-- > 0 && out != 0)
 			{
 				OALBuffer b = source.dequeueBuffer();
+				bytebuffer.clear();
 				out = decoderRef.readPCMBytes(bytebuffer);
+				bytebuffer.flip();
 				if (out > 0)
 				{
-					b.setData(ByteBuffer.wrap(bytebuffer, 0, out));
+					b.setData(bytebuffer);
 					source.enqueueBuffer(b);
 				}
 				else if (out == 0 && voice.looping)
 				{
 					restartDecoder(soundHandle);
+					bytebuffer.clear();
 					out = decoderRef.readPCMBytes(bytebuffer);
+					bytebuffer.flip();
 					if (out > 0)
 					{
-						b.setData(ByteBuffer.wrap(bytebuffer, 0, out));
+						b.setData(bytebuffer);
 						source.enqueueBuffer(b);
 					}
 				}
@@ -1858,66 +1848,6 @@ public class SoundSystem
 		
 	}
 	
-	/**
-	 * Streamer thread.
-	 * Kept alive if streams need updating.
-	 * This is to keep work off of the main update thread.
-	 */
-	private class StreamerThread extends Thread
-	{
-		private boolean killed;
-		
-		StreamerThread()
-		{
-			super();
-			setName("SoundSystem-Streamer");
-			setDaemon(true);
-		}
-		
-		public void kill()
-		{
-			killed = true;
-		}
-		
-		@Override
-		public void run()
-		{
-			listeners.forEach((listener) -> listener.onStreamThreadStarted());
-			while (!killed && !activeStreams.isEmpty())
-			{
-				synchronized (activeStreams)
-				{
-					if (!activeStreams.isEmpty())
-					{
-						Iterator<Voice> streamIterator = activeStreams.iterator();
-						while (streamIterator.hasNext() && !killed)
-						{
-							Voice voice = streamIterator.next();
-							OALSource source = voice.source;
-							SoundStream stream = voice.stream;
-							SoundData sound = voice.data;
-							try {
-								stream.streamUpdate(voice, source);
-							} catch (UnsupportedAudioFileException e) {
-								listeners.forEach((listener) -> listener.onSoundUnsupportedError(sound, e));
-								stopVoice(voice);
-							} catch (IOException e) {
-								listeners.forEach((listener) -> listener.onSoundIOError(sound, e));
-								stopVoice(voice);
-							} 
-							
-						}
-	
-					}
-				}
-				ThreadUtils.sleep(50);
-			}
-			stopStreamer();
-			listeners.forEach((listener) -> listener.onStreamThreadEnded());
-		}
-		
-	}
-
 	/**
 	 * A resource data type.
 	 */

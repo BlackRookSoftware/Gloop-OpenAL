@@ -93,9 +93,8 @@ public final class SystemTest
 		});
 		
 		SoundGroup group = SoundSystem.group(false, true, false, 0);
-		SoundData data = SoundSystem.fileData(new File(args[0]), true, 0);
-		
-		group.setEffectGain(0f);
+		SoundData data = SoundSystem.fileData(new File(args[0]), false, 0);
+		group.setEffectGain(0.5f);
 		system.play(data, group);
 	}
 }
