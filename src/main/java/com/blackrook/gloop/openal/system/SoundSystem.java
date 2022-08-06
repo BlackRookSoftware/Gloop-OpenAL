@@ -71,11 +71,6 @@ public class SoundSystem
 	
 	private SoundCache cache;
 	
-	private Deque<OALSource> availableSources;
-	private Deque<OALSource> usedSources;
-	private Deque<BandPassFilter> availableFilters;
-	private Deque<BandPassFilter> usedFilters;
-
 	private OALEffectSlot echoEffectSlot;
 	private OALEffectSlot reverbEffectSlot;
 
@@ -104,15 +99,22 @@ public class SoundSystem
 	
 	private Map<SoundData, Deque<Voice>> soundToVoicesMap;
 	private Map<SoundGroupType, Deque<Voice>> groupToVoicesMap;
-	private Map<SoundLocation, Deque<Voice>> sourceToVoicesMap;
+	private Map<SoundLocation, Deque<Voice>> locationToVoicesMap;
 
 	/** Deque of active streams. */
 	private Deque<Voice> activeStreams;
 	/** Active stream updater thread. */
 	private Streamer streamer;
+	/** Active processor thread. */
+	private ProcessorThread processor;
 
 	private SoundScapeType soundScape;
 	private OcclusionFunction occlusionFunction;
+
+	// ======================================================================
+	
+	private long updateEventNanos;
+	private long updateVoiceNanos;
 	
 	// ======================================================================
 
@@ -146,20 +148,6 @@ public class SoundSystem
 
 		this.cache = new SoundCache(cacheSize);
 		
-		this.availableSources = new LinkedList<>();
-		this.usedSources = new LinkedList<>();
-		
-		// Make sources.
-		while (availableSources.size() < voices)
-			availableSources.add(context.createSource());
-
-		this.availableFilters = new LinkedList<>();
-		this.usedFilters = new LinkedList<>();
-		
-		// Make filters.
-		while (availableFilters.size() < voices)
-			availableFilters.add(context.createBandPassFilter());
-		
 		// Make shared effects.
 		
 		this.echoEffectSlot = context.createEffectSlot();
@@ -192,14 +180,36 @@ public class SoundSystem
 		this.usedVoices = new LinkedList<>();
 
 		while (availableVoices.size() < voices)
-			availableVoices.add(new Voice());
+		{
+			Voice voice = new Voice();
+			voice.source = context.createSource();
+			voice.filter = context.createBandPassFilter();
+			voice.source.setFilter(voice.filter);
+			availableVoices.add(voice);
+		}
 
 		this.soundToVoicesMap = new HashMap<>();
 		this.groupToVoicesMap = new HashMap<>();
-		this.sourceToVoicesMap = new HashMap<>();
+		this.locationToVoicesMap = new HashMap<>();
+		
+		this.activeStreams = new LinkedList<>();
+		this.streamer = null;
+		this.processor = new ProcessorThread();
 		
 		this.soundScape = null;
 		this.occlusionFunction = null;
+
+		this.processor.start();
+	}
+
+	/**
+	 * Creates a new sound data type.
+	 * @param file the file to load. 
+	 * @return a new category.
+	 */
+	public static SoundData fileData(File file)
+	{
+		return fileData(file, false, false, false, 0, 0f);
 	}
 
 	/**
@@ -282,6 +292,16 @@ public class SoundSystem
 	/**
 	 * Creates a new sound data type.
 	 * @param resourcePath the path to the internal resource.
+	 * @return a new category.
+	 */
+	public static SoundData resourceData(String resourcePath)
+	{
+		return resourceData(resourcePath, false, false, false, 0, 0f);
+	}
+
+	/**
+	 * Creates a new sound data type.
+	 * @param resourcePath the path to the internal resource.
 	 * @param limit the concurrent play limit until a cull or replace.
 	 * @return a new category.
 	 */
@@ -354,6 +374,33 @@ public class SoundSystem
 	public static SoundData resourceData(String resourcePath, boolean stream, boolean replacesOldSounds, boolean alwaysPlayed, int limit, float pitchVariance)
 	{
 		return new ResourceData(resourcePath, stream, replacesOldSounds, alwaysPlayed, limit, pitchVariance);
+	}
+
+	/**
+	 * Creates a new group type with defaults set, no parent.
+	 * @param occludable if true, the sounds played from the this group are occludable.
+	 * @param twoDimensional if true, the sounds played from the this group are panned, not spacialized.
+	 * @param zeroPosition if true, the sounds played from the this group are always played from the observer and unattenuated.
+	 * @param maxVoices the maximum amount of voices for this group. 0 is unlimited.
+	 * @return a new group.
+	 */
+	public static SoundGroup group(boolean occludable, boolean twoDimensional, boolean zeroPosition, int maxVoices)
+	{
+		return group(null, occludable, twoDimensional, zeroPosition, maxVoices);
+	}
+
+	/**
+	 * Creates a new group type with defaults set.
+	 * @param parent the parent group to accumulate from.
+	 * @param occludable if true, the sounds played from the this group are occludable.
+	 * @param twoDimensional if true, the sounds played from the this group are panned, not spacialized.
+	 * @param zeroPosition if true, the sounds played from the this group are always played from the observer and unattenuated.
+	 * @param maxVoices the maximum amount of voices for this group. 0 is unlimited.
+	 * @return a new group.
+	 */
+	public static SoundGroup group(SoundGroupType parent, boolean occludable, boolean twoDimensional, boolean zeroPosition, int maxVoices)
+	{
+		return new SoundGroup(parent, occludable, twoDimensional, zeroPosition, maxVoices);
 	}
 
 	/**
@@ -592,7 +639,22 @@ public class SoundSystem
 	 */
 	public void play(SoundData data, SoundGroupType group, SoundCategoryType category, SoundLocation location, Integer channel)
 	{
-		// TODO Finish this.
+		Event event = new Event();
+		event.type = Event.Type.PLAY;
+		event.channel = channel;
+		event.location = location;
+		event.category = category;
+		event.group = group;
+		event.sound = data;
+		
+		event.initGain = 1f;
+		event.initPitch = 1f;
+		
+		synchronized (eventQueue)
+		{
+			eventQueue.add(event);
+		}
+		
 	}
 	
 	/**
@@ -610,31 +672,118 @@ public class SoundSystem
 	}
 	
 	/**
+	 * Processes sound events and system changes.
+	 */
+	private void update()
+	{
+		updateVoices();
+		updateEnvironment();
+	}
+
+	/**
+	 * Updates the events pending to be processed.
+	 * Called by update(), but exposed to developers here for
+	 * those who want to fine-tune stage update frequencies.
+	 * <p>If this is never called, either by update() or directly,
+	 * no new events, like effect changes, sounds to play, or sounds
+	 * to stop, will ever be processed.
+	 */
+	private void updateEvents()
+	{
+		long nanotime = System.nanoTime();
+
+		// lock queue during read.
+		synchronized (eventQueue)
+		{
+			while (!processDelay.isEmpty())
+			{
+				handleEvent(processDelay.pollFirst());
+			}
+			while(!eventQueue.isEmpty())
+			{
+				handleEvent(eventQueue.pollFirst());
+			}
+		}
+		
+		updateEventNanos = System.nanoTime() - nanotime;
+	}
+
+	/**
+	 * Updates the active voices.
+	 * Called by update(), but exposed to developers here for
+	 * those who want to fine-tune stage update frequencies.
+	 * <p>If this is never called, either by update() or directly,
+	 * no voice attributes like pitch, panning, or gain attenuation 
+	 * will be updated, nor will used voices be freed.
+	 */
+	private void updateVoices()
+	{
+		long nanotime = System.nanoTime();
+		Iterator<Voice> it = usedVoices.iterator();
+		while (it.hasNext())
+			updateVoice(it.next());
+		
+		cleanUpDeadVoices();
+		updateVoiceNanos = System.nanoTime() - nanotime;
+	}
+	
+	/**
+	 * Updates the environment (soundscape).
+	 */
+	private void updateEnvironment()
+	{
+		// TODO: Finish this.
+	}
+
+	/**
+	 * Finds dead used voices and frees them.
+	 */
+	private void cleanUpDeadVoices()
+	{
+		Iterator<Voice> it = usedVoices.iterator();
+		while (it.hasNext())
+		{
+			Voice voice = it.next();
+			if (!voice.source.isPlaying() && !voice.source.isPaused())
+			{
+				deadVoices.add(voice);
+				it.remove();
+			}
+		}
+
+		while (!deadVoices.isEmpty())
+			deallocateVoice(deadVoices.pollFirst());
+	}
+	
+	/**
 	 * Finds an unused or suitable voice for an incoming sound to play.
 	 * Does basic checks for virtual channel availability and may stop other sounds in order to allocate a voice.
 	 * @return a voice, or null if no available voice.
 	 */
 	private Voice allocateVoice(Event event)
 	{
-		SoundData data = event.data; 
+		SoundData data = event.sound; 
 		SoundGroupType group = event.group;
 		SoundCategoryType category = event.category; 
 		SoundLocation location = event.location;
 		Integer channel = event.channel;
 		
 		Voice out = null;
-	
+
 		// actor clear?
 		if (location != null && channel != null)
 		{
 			Voice voice = null;
-			Deque<Voice> voiceList = sourceToVoicesMap.get(location);
-			if (voiceList != null) for (Voice v : voiceList)
+			Deque<Voice> voiceList = locationToVoicesMap.get(location);
+			if (voiceList != null)
 			{
-				if (v.channel == channel)
+				for (Voice v : voiceList)
 				{
-					voice = v;
-					break;
+					if (v.channel == channel)
+					{
+						voice = v;
+						break;
+					}
 				}
 			}
 			if (voice != null)
@@ -754,8 +903,7 @@ public class SoundSystem
 		voice.data = sound;
 
 		// Set up filters/effects.
-		BandPassFilter filter = availableFilters.pollFirst();
-		voice.source.setFilter(filter);
+		voice.source.setFilter(voice.filter);
 		voice.source.setEffectSlot(0, echoEffectSlot);
 		voice.source.setEffectSlot(1, reverbEffectSlot);
 		
@@ -775,7 +923,7 @@ public class SoundSystem
 		voice.source.setBuffer(null);
 		voice.reset();
 		
-		// TODO: Finish this.
+		deregisterVoice(voice);
 	}
 	
 	/**
@@ -784,8 +932,11 @@ public class SoundSystem
 	 */
 	private void registerVoice(Voice voice)
 	{
-		// TODO: Finish this.
-		// Add voice to maps.
+		if (voice.group != null)
+			addVoiceToMap(voice.group, voice, groupToVoicesMap);
+		if (voice.location != null)
+			addVoiceToMap(voice.location, voice, locationToVoicesMap);
+		addVoiceToMap(voice.data, voice, soundToVoicesMap);
 	}
 	
 	/**
@@ -795,8 +946,11 @@ public class SoundSystem
 	 */
 	private void deregisterVoice(Voice voice)
 	{
-		// TODO: Finish this.
-		// Remove voice from maps.
+		if (voice.group != null)
+			removeVoiceFromMap(voice.group, voice, groupToVoicesMap);
+		if (voice.location != null)
+			removeVoiceFromMap(voice.location, voice, locationToVoicesMap);
+		removeVoiceFromMap(voice.data, voice, soundToVoicesMap);
 	}
 	
 	/**
@@ -834,6 +988,144 @@ public class SoundSystem
 		
 	}
 	
+	/**
+	 * Handles an incoming sound event.
+	 * @param event
+	 */
+	private void handleEvent(Event event) 
+	{
+		switch (event.type)
+		{
+			case PLAY:
+				handlePlay(event);
+				break;
+			case STOP:
+				handleStop(event);
+				break;
+			case STOP_ALL:
+				handleStopAll();
+				break;
+			case PAUSE:
+				handlePause(event);
+				break;
+			case RESUME:
+				handleResume(event);
+				break;
+			case PRECACHE:
+				handlePrecache(event);
+				break;
+		}
+	}
+
+	/**
+	 * Handles a precache event.
+	 */
+	private void handlePrecache(Event event)
+	{
+		if (event.sound != null)
+			cacheSounds(event.sound);
+	}
+
+	/**
+	 * Handles a stop all event.
+	 */
+	private void handleStopAll()
+	{
+		for (Voice voice : usedVoices)
+			stopVoice(voice);
+	}
+
+	/**
+	 * Handles a sound stop event.
+	 */
+	private void handleStop(Event event)
+	{
+		if (event.location != null)
+		{
+			Deque<Voice> voiceList = locationToVoicesMap.get(event.location);
+			if (voiceList != null) for (Voice voice : voiceList)
+			{
+				if (event.channel == null || voice.channel == event.channel)
+					stopVoice(voice);
+			}
+		}
+		
+		if (event.group != null)
+		{
+			Deque<Voice> voiceList = groupToVoicesMap.get(event.group);
+			if (voiceList != null) for (Voice voice : voiceList)
+				stopVoice(voice);
+		}
+		
+		if (event.sound != null)
+		{
+			Deque<Voice> voiceList = soundToVoicesMap.get(event.sound);
+			if (voiceList != null) for (Voice voice : voiceList)
+				stopVoice(voice);
+		}
+		
+	}
+
+	/**
+	 * Handles a pause event.
+	 */
+	private void handlePause(Event event)
+	{
+		if (event.location != null)
+		{
+			Deque<Voice> voiceList = locationToVoicesMap.get(event.location);
+			if (voiceList != null) for (Voice voice : voiceList)
+				voice.source.pause();
+		}
+		
+		if (event.group != null)
+		{
+			Deque<Voice> voiceList = groupToVoicesMap.get(event.group);
+			if (voiceList != null) for (Voice voice : voiceList)
+				voice.source.pause();
+		}
+	}
+
+	/**
+	 * Handles a resume event.
+	 */
+	private void handleResume(Event event)
+	{
+		if (event.location != null)
+		{
+			Deque<Voice> voiceList = locationToVoicesMap.get(event.location);
+			if (voiceList != null) for (Voice voice : voiceList)
+				voice.source.play();
+		}
+		
+		if (event.group != null)
+		{
+			Deque<Voice> voiceList = groupToVoicesMap.get(event.group);
+			if (voiceList != null) for (Voice voice : voiceList)
+				voice.source.play();
+		}
+	}
+
+	/**
+	 * Handles a sound play event.
+	 * Returns true if handled, false if this is to be belayed.
+	 */
+	private boolean handlePlay(Event event)
+	{
+		Voice voice = allocateVoice(event);
+		if (voice != null)
+		{
+			voice.source.play();
+		}
+		else if (event.sound.isAlwaysPlayed())
+		{
+			processDelay.add(event);
+			return false;
+		}
+		
+		return true;
+	}
+
 	/**
 	 * Calculates the reference position for a voice relative to the observer (camera).
 	 * @param voice the input voice.
@@ -887,9 +1179,9 @@ public class SoundSystem
 		// not positional, position is strict panning
 		else if (voice.group.isTwoDimensional()) 
 		{
-			positionX = voice.location.getSoundPositionX();
+			positionX = voice.location != null ? voice.location.getSoundPositionX() : 0.0f;
 			positionY = 0.0f;
-			positionZ = 0.0f;
+			positionZ = 1.0f;
 			
 			update.distance = 0.0f; 
 			update.coneAngle = 0.0f; 
@@ -917,14 +1209,17 @@ public class SoundSystem
 		SoundRolloffType rolloffHF = DEFAULT_ROLLOFF;
 		SoundRolloffType rolloffConic = DEFAULT_ROLLOFF;
 
-		if (voice.category.getRolloffType() != null)
-			rolloff = voice.category.getRolloffType();
-		if (voice.category.getLowPassRolloffType() != null)
-			rolloffLF = voice.category.getLowPassRolloffType();
-		if (voice.category.getHighPassRolloffType() != null)
-			rolloffHF = voice.category.getHighPassRolloffType();
-		if (voice.category.getConicRolloffType() != null)
-			rolloffConic = voice.category.getConicRolloffType();
+		if (voice.category != null)
+		{
+			if (voice.category.getRolloffType() != null)
+				rolloff = voice.category.getRolloffType();
+			if (voice.category.getLowPassRolloffType() != null)
+				rolloffLF = voice.category.getLowPassRolloffType();
+			if (voice.category.getHighPassRolloffType() != null)
+				rolloffHF = voice.category.getHighPassRolloffType();
+			if (voice.category.getConicRolloffType() != null)
+				rolloffConic = voice.category.getConicRolloffType();
+		}
 
 		float rolloffGain;
 		float rolloffLFGain;
@@ -1005,17 +1300,17 @@ public class SoundSystem
 		listeners.forEach((listener) -> listener.onVoiceStopped(voice));
 	}
 	
-	private <T> void addVoiceToMap(T key, Voice voice, Map<T, List<Voice>> voiceMap)
+	private <T> void addVoiceToMap(T key, Voice voice, Map<T, Deque<Voice>> voiceMap)
 	{
-		List<Voice> voices;
+		Deque<Voice> voices;
 		if ((voices = voiceMap.get(key)) == null)
 			voiceMap.put(key, voices = new LinkedList<>());
 		voices.add(voice);
 	}
 
-	private <T> void removeVoiceFromMap(T key, Voice voice, Map<T, List<Voice>> voiceMap)
+	private <T> void removeVoiceFromMap(T key, Voice voice, Map<T, Deque<Voice>> voiceMap)
 	{
-		List<Voice> voices;
+		Deque<Voice> voices;
 		if ((voices = voiceMap.get(key)) != null)
 		{
 			voices.remove(voice);
@@ -1102,6 +1397,149 @@ public class SoundSystem
 		void onSoundUnsupportedError(SoundData data, UnsupportedAudioFileException e);
 	}
 	
+	/**
+	 * A playback group type.
+	 */
+	public static class SoundGroup implements SoundGroupType
+	{
+		private SoundGroupType parent;
+		
+		private float gain;
+		private float gainLF;
+		private float gainHF;
+		private float gainEffect;
+		private float pitch;
+		
+		private boolean occludable;
+		private boolean twoDimensional;
+		private boolean zeroPosition;
+		private int maxVoices;
+	
+		public SoundGroup(SoundGroupType parent, boolean occludable, boolean twoDimensional, boolean zeroPosition, int maxVoices)
+		{
+			this.parent = parent;
+			this.gain = 1f;
+			this.gainLF = 1f;
+			this.gainHF = 1f;
+			this.gainEffect = 0f;
+			this.pitch = 1f;
+			this.occludable = occludable;
+			this.twoDimensional = twoDimensional;
+			this.zeroPosition = zeroPosition;
+			this.maxVoices = maxVoices;
+		}
+	
+		@Override
+		public float getCalculatedGain()
+		{
+			return (parent != null ? parent.getCalculatedGain() : 1f) * gain;
+		}
+	
+		@Override
+		public float getCalculatedPitch()
+		{
+			return (parent != null ? parent.getCalculatedPitch() : 1f) * pitch;
+		}
+	
+		@Override
+		public float getCalculatedLowPassGain()
+		{
+			return (parent != null ? parent.getCalculatedLowPassGain() : 1f) * gainLF;
+		}
+	
+		@Override
+		public float getCalculatedHighPassGain()
+		{
+			return (parent != null ? parent.getCalculatedHighPassGain() : 1f) * gainHF;
+		}
+	
+		@Override
+		public float getCalculatedEffectGain()
+		{
+			return (parent != null ? parent.getCalculatedEffectGain() : 1f) * gainEffect;
+		}
+	
+		@Override
+		public float getGain()
+		{
+			return gain;
+		}
+	
+		public void setGain(float gain)
+		{
+			this.gain = gain;
+		}
+
+		@Override
+		public float getPitch()
+		{
+			return pitch;
+		}
+
+		public void setPitch(float pitch)
+		{
+			this.pitch = pitch;
+		}
+	
+		@Override
+		public float getLowPassGain()
+		{
+			return gainLF;
+		}
+	
+		public void setLowPassGain(float gainLF)
+		{
+			this.gainLF = gainLF;
+		}
+
+		@Override
+		public float getHighPassGain()
+		{
+			return gainHF;
+		}
+	
+		public void setHighPassGain(float gainHF)
+		{
+			this.gainHF = gainHF;
+		}
+
+		@Override
+		public float getEffectGain()
+		{
+			return gainEffect;
+		}
+	
+		public void setEffectGain(float gainEffect)
+		{
+			this.gainEffect = gainEffect;
+		}
+
+		@Override
+		public boolean isOccludable()
+		{
+			return occludable;
+		}
+	
+		@Override
+		public boolean isTwoDimensional()
+		{
+			return twoDimensional;
+		}
+	
+		@Override
+		public boolean isZeroPosition()
+		{
+			return zeroPosition;
+		}
+	
+		@Override
+		public int getMaximumVoices()
+		{
+			return maxVoices;
+		}
+		
+	}
+
 	/**
 	 * The streamer object made for each streaming voice.  
 	 */
@@ -1190,6 +1628,48 @@ public class SoundSystem
 	}
 
 	/**
+	 * Processor thread.
+	 * Waits until events need processing, and then runs at update intervals until there's no more work to do.
+	 */
+	private class ProcessorThread extends Thread
+	{
+		private final long EVENTMILLIS = 1000L / 60;  
+		
+		private boolean keepAlive;
+		
+		private ProcessorThread() 
+		{
+			this.keepAlive = true;
+		}
+		
+		@Override
+		public void run()
+		{
+			boolean flipflop = false;
+			
+			while (keepAlive)
+			{
+				if (flipflop)
+					updateVoices();
+				updateEvents();
+				
+				flipflop = !flipflop;
+				
+				ThreadUtils.sleep(EVENTMILLIS);
+			}
+		}
+		
+		/**
+		 * Stops this thread.
+		 */
+		public void shutdown()
+		{
+			keepAlive = false;
+		}
+		
+	}
+	
+	/**
 	 * Streamer thread.
 	 * Kept alive if streams need updating.
 	 * This is to keep work off of the main update thread.
@@ -1241,7 +1721,7 @@ public class SoundSystem
 	
 					}
 				}
-				ThreadUtils.sleep(100);
+				ThreadUtils.sleep(50);
 			}
 			stopStreamer();
 			listeners.forEach((listener) -> listener.onStreamThreadEnded());
@@ -1551,10 +2031,14 @@ public class SoundSystem
 			PLAY,
 			PLAY_LOOP,
 			STOP,
+			STOP_ALL,
+			PAUSE,
+			RESUME,
+			PRECACHE
 		}
 		
 		private Type type;
-		private SoundData data;
+		private SoundData sound;
 		private SoundGroupType group; 
 		private SoundCategoryType category;
 		private SoundLocation location; 

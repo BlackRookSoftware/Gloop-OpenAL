@@ -10,25 +10,50 @@ public interface SoundGroupType
 	/**
 	 * @return the combined multiplicative gain for this group.
 	 */
-	float getGain();
+	float getCalculatedGain();
 
 	/**
 	 * @return the combined multiplicative pitch for this group.
 	 */
-	float getPitch();
+	float getCalculatedPitch();
 
 	/**
 	 * @return the combined multiplicative dry low pass gain for this group.
 	 */
-	float getLowPassGain();
+	float getCalculatedLowPassGain();
 
 	/**
 	 * @return the combined multiplicative dry high pass gain for this group.
 	 */
-	float getHighPassGain();
+	float getCalculatedHighPassGain();
 
 	/**
 	 * @return the combined multiplicative wet effect gain for this group.
+	 */
+	float getCalculatedEffectGain();
+
+	/**
+	 * @return the gain for this group.
+	 */
+	float getGain();
+
+	/**
+	 * @return the pitch for this group.
+	 */
+	float getPitch();
+
+	/**
+	 * @return the dry low pass gain for this group.
+	 */
+	float getLowPassGain();
+
+	/**
+	 * @return the dry high pass gain for this group.
+	 */
+	float getHighPassGain();
+
+	/**
+	 * @return the wet effect gain for this group.
 	 */
 	float getEffectGain();
 
