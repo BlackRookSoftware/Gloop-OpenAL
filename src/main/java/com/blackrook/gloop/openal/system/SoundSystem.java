@@ -351,6 +351,18 @@ public class SoundSystem
 	}
 
 	/**
+	 * Creates a new SoundScape.
+	 * @param echoType the echo type.
+	 * @param reverbType the reverb type.
+	 * @param occlusionType the occlusion type.
+	 * @return a new soundscape.
+	 */
+	public static SoundScape soundScape(SoundEchoType echoType, SoundReverbType reverbType, SoundOcclusionType occlusionType)
+	{
+		return new SoundScape(echoType, reverbType, occlusionType);
+	}
+	
+	/**
 	 * Creates a new group type with defaults set, no parent.
 	 * @param occludable if true, the sounds played from the this group are occludable.
 	 * @param twoDimensional if true, the sounds played from the this group are panned, not spacialized.
@@ -774,6 +786,82 @@ public class SoundSystem
 		enqueueEvent(event);
 	}
 	
+	/**
+	 * @return the amount of time it took the voice update loop to update in nanoseconds.
+	 */
+	public long getUpdateVoiceNanos()
+	{
+		return updateVoiceNanos;
+	}
+	
+	/**
+	 * @return the amount of time it took the event loop to update in nanoseconds.
+	 */
+	public long getUpdateEventNanos()
+	{
+		return updateEventNanos;
+	}
+	
+	/**
+	 * Stops all threads, sounds, and deallocates everything.
+	 */
+	public void shutDown()
+	{
+		handleStopAll();
+
+		if  (!primedStreams.isEmpty())
+		{
+			Iterator<SoundStream> it = primedStreams.values().iterator();
+			SoundStream ss = null;
+			while(it.hasNext())
+			{
+				ss = it.next();
+				for (OALBuffer b : ss.buffers)
+					b.destroy();
+			}
+			primedStreams.clear();
+		}
+		
+		while (!usedVoices.isEmpty())
+		{
+			Voice voice = usedVoices.pollFirst();
+			stopVoice(voice);
+			voice.destroy();
+		}
+		while (!availableVoices.isEmpty())
+		{
+			Voice voice = availableVoices.pollFirst();
+			stopVoice(voice);
+			voice.destroy();
+		}
+
+		cache.destroy();
+		
+		processor.shutdown();
+		
+		soundToVoicesMap.clear();
+		soundToVoicesMap = null;
+		locationToVoicesMap.clear();
+		locationToVoicesMap = null;
+		groupToVoicesMap.clear();
+		groupToVoicesMap = null;
+
+		random = null;
+		
+		primedStreams = null;
+		processDelay = null;
+		usedVoices = null;
+		availableVoices = null;
+		deadVoices = null;
+		
+		if (system != null)
+		{
+			system.shutDown();
+			system = null;
+			context = null;
+		}
+	}
+	
 	private void enqueueEvent(Event event)
 	{
 		// lock queue during write.
@@ -1045,6 +1133,8 @@ public class SoundSystem
 			BandPassFilter filter = voice.filter;
 			OALEffectSlot echoSlot = voice.effectSlot0;
 			OALEffectSlot reverbSlot = voice.effectSlot1;
+			EchoEffect echoEffect = voice.echoEffect;
+			ReverbEffect reverbEffect = voice.reverbEffect;
 
 			source.setPosition(update.sourceX, update.sourceY, update.sourceZ);
 			source.setGain(update.gain);
@@ -1055,8 +1145,41 @@ public class SoundSystem
 			filter.setLFGain(update.gainLF);
 			source.setFilter(filter); // force update
 			
-			echoSlot.setGain(update.gainEffect);
-			reverbSlot.setGain(update.gainEffect);
+			if (soundScape != null)
+			{
+				if (soundScape.getEcho() != null)
+				{
+					SoundEchoType echoType = soundScape.getEcho();
+					echoEffect.setDamping(echoType.getDamping());
+					echoEffect.setDelay(echoType.getDelay());
+					echoEffect.setFeedback(echoType.getFeedback());
+					echoEffect.setLRDelay(echoType.getLRDelay());
+					echoEffect.setSpread(echoType.getSpread());
+					echoSlot.setEffect(echoEffect);
+				}
+				
+				if (soundScape.getReverb()!= null)
+				{
+					SoundReverbType reverbType = soundScape.getReverb();
+					reverbEffect.setAirAbsorptionGainHF(reverbType.getAirAbsorptionHFGain());
+					reverbEffect.setDecayHFLimit(reverbType.isDecayHFLimit());
+					reverbEffect.setDecayHFRatio(reverbType.getDecayHFRatio());
+					reverbEffect.setDecayTime(reverbType.getDecayTime());
+					reverbEffect.setDensity(reverbType.getDensity());
+					reverbEffect.setDiffusion(reverbType.getDiffusion());
+					reverbEffect.setGain(reverbType.getGain());
+					reverbEffect.setHFGain(reverbType.getHFGain());
+					reverbEffect.setLateDelay(reverbType.getLateDelay());
+					reverbEffect.setLateGain(reverbType.getLateGain());
+					reverbEffect.setReflectionDelay(reverbType.getReflectionDelay());
+					reverbEffect.setReflectionGain(reverbType.getReflectionGain());
+					reverbEffect.setRoomRolloffFactor(reverbType.getRoomRolloffFactor());
+					reverbSlot.setEffect(reverbEffect);
+				}
+			}
+			
+			echoSlot.setGain(update.gainEffectEcho);
+			reverbSlot.setGain(update.gainEffectReverb);
 			
 			if (voice.stream != null)
 			{
@@ -1319,8 +1442,11 @@ public class SoundSystem
 	{
 		SoundData sound = voice.data;
 		
-		float voiceGain = voice.initGain * voice.group.getGain();
-		float voicePitch = voice.initPitch * voice.group.getPitch();
+		float voiceGain = voice.initGain * voice.group.getCalculatedGain();
+		float voicePitch = voice.initPitch * voice.group.getCalculatedPitch();
+		float voiceGainLF = voice.group.getCalculatedLowPassGain();
+		float voiceGainHF = voice.group.getCalculatedHighPassGain();
+		float voiceEffectGain = voice.group.getCalculatedEffectGain();
 		
 		float soundGain = 1.0f;
 		float soundPitch = 1.0f + (float)RandomUtils.randDouble(random, -sound.getPitchVariance(), sound.getPitchVariance());
@@ -1350,6 +1476,12 @@ public class SoundSystem
 		float occlusionGain;
 		float occlusionHFGain;
 		float occlusionLFGain;
+		
+		float soundScapeEffectGain;
+		float soundScapeEffectEchoGain;
+		float soundScapeEffectReverbGain;
+		
+		float distanceEffectGain = 1f; // TODO: Affect effect gain with distance somewhat.
 	
 		if (rolloff != null)
 		{
@@ -1366,17 +1498,41 @@ public class SoundSystem
 			rolloffGainConic = 1.0f;
 		}
 	
-		if (soundScape != null && soundScape.getOcclusion() != null)
+		if (soundScape != null)
 		{
-			occlusionGain = 1.0f - (update.occlusion * (1.0f - soundScape.getOcclusion().getGain()));
-			occlusionHFGain = 1.0f - (update.occlusion * (1.0f - soundScape.getOcclusion().getHighPassGain()));
-			occlusionLFGain = 1.0f - (update.occlusion * (1.0f - soundScape.getOcclusion().getLowPassGain()));
+			if (soundScape.getOcclusion() != null)
+			{
+				occlusionGain = 1.0f - (update.occlusion * (1.0f - soundScape.getOcclusion().getGain()));
+				occlusionLFGain = 1.0f - (update.occlusion * (1.0f - soundScape.getOcclusion().getLowPassGain()));
+				occlusionHFGain = 1.0f - (update.occlusion * (1.0f - soundScape.getOcclusion().getHighPassGain()));
+			}
+			else
+			{
+				occlusionGain = 1.0f;
+				occlusionLFGain = 1.0f;
+				occlusionHFGain = 1.0f;
+			}
+			
+			if (soundScape.getEcho() != null)
+				soundScapeEffectEchoGain = 1.0f;
+			else
+				soundScapeEffectEchoGain = 0.0f;
+
+			if (soundScape.getReverb() != null)
+				soundScapeEffectReverbGain = 1.0f;
+			else
+				soundScapeEffectReverbGain = 0.0f;
+
+			soundScapeEffectGain = 1.0f;
 		}
 		else
 		{
 			occlusionGain = 1.0f;
-			occlusionHFGain = 1.0f;
 			occlusionLFGain = 1.0f;
+			occlusionHFGain = 1.0f;
+			soundScapeEffectGain = 0.0f;
+			soundScapeEffectEchoGain = 0.0f;
+			soundScapeEffectReverbGain = 0.0f;
 		}
 		
 		float dopplerPitch = 1.0f;
@@ -1392,10 +1548,10 @@ public class SoundSystem
 		
 		update.gain = voiceGain * soundGain * rolloffGain * rolloffGainConic * occlusionGain;
 		update.pitch = voicePitch * soundPitch * dopplerPitch;
-		update.gainHF = rolloffHFGain * occlusionHFGain;
-		update.gainLF = rolloffLFGain * occlusionLFGain;
-		
-		update.gainEffect = 0f;
+		update.gainLF = rolloffLFGain * occlusionLFGain * voiceGainLF;
+		update.gainHF = rolloffHFGain * occlusionHFGain * voiceGainHF;
+		update.gainEffectEcho = voiceEffectGain * distanceEffectGain * soundScapeEffectGain * soundScapeEffectEchoGain;
+		update.gainEffectReverb = voiceEffectGain * distanceEffectGain * soundScapeEffectGain * soundScapeEffectReverbGain;
 	}
 
 	private static float gainFactor(SoundRolloffType rolloff, float distance)
@@ -1494,10 +1650,47 @@ public class SoundSystem
 		void onVoiceAllocated(Voice voice);
 		void onVoiceDeallocated(Voice voice);
 		void onStreamThreadStarted();
+		void onStreamStep(Voice voice);
 		void onStreamThreadEnded();
 		void onSoundCached(SoundData data);
 		void onSoundIOError(SoundData data, IOException e);
 		void onSoundUnsupportedError(SoundData data, UnsupportedAudioFileException e);
+	}
+	
+	/**
+	 * A soundscape type.
+	 */
+	private static class SoundScape implements SoundScapeType
+	{
+		private SoundEchoType echoType;
+		private SoundReverbType reverbType;
+		private SoundOcclusionType occlusionType;
+
+		private SoundScape(SoundEchoType echoType, SoundReverbType reverbType, SoundOcclusionType occlusionType)
+		{
+			super();
+			this.echoType = echoType;
+			this.reverbType = reverbType;
+			this.occlusionType = occlusionType;
+		}
+
+		@Override
+		public SoundEchoType getEcho()
+		{
+			return echoType;
+		}
+
+		@Override
+		public SoundReverbType getReverb()
+		{
+			return reverbType;
+		}
+
+		@Override
+		public SoundOcclusionType getOcclusion()
+		{
+			return occlusionType;
+		}
 	}
 	
 	/**
@@ -1699,6 +1892,7 @@ public class SoundSystem
 			reverbEffect.destroy();
 			echoEffect.destroy();
 			source.setFilter(null);
+			source.setBuffer(null);
 			filter.destroy();
 			source.destroy();
 		}
@@ -1785,6 +1979,7 @@ public class SoundSystem
 				{
 					b.setData(bytebuffer);
 					source.enqueueBuffer(b);
+					listeners.forEach((listener) -> listener.onStreamStep(voice));
 				}
 				else if (out == 0 && voice.looping)
 				{
@@ -1796,6 +1991,7 @@ public class SoundSystem
 					{
 						b.setData(bytebuffer);
 						source.enqueueBuffer(b);
+						listeners.forEach((listener) -> listener.onStreamStep(voice));
 					}
 				}
 			}
@@ -1810,14 +2006,14 @@ public class SoundSystem
 	 */
 	private class ProcessorThread extends Thread
 	{
-		private final long EVENTMILLIS = 1000L / 60;  
+		private final long EVENTMILLIS = 1000L / 60;
 		
-		private boolean keepAlive;
+		private volatile boolean keepAlive;
 		
 		private ProcessorThread() 
 		{
 			setName("SoundSystem-Processor");
-			setDaemon(false);
+			setDaemon(true);
 			this.keepAlive = true;
 		}
 		
@@ -2139,7 +2335,8 @@ public class SoundSystem
 		private float gain;
 		private float gainLF;
 		private float gainHF;
-		private float gainEffect;
+		private float gainEffectEcho;
+		private float gainEffectReverb;
 		private float pitch;
 	}
 

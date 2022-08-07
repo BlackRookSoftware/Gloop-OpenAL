@@ -7,6 +7,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import com.blackrook.gloop.openal.struct.ThreadUtils;
 import com.blackrook.gloop.openal.system.SoundData;
+import com.blackrook.gloop.openal.system.SoundReverbType;
 import com.blackrook.gloop.openal.system.SoundSystem;
 import com.blackrook.gloop.openal.system.SoundSystem.SoundGroup;
 import com.blackrook.gloop.openal.system.SoundSystem.Voice;
@@ -67,11 +68,23 @@ public final class SystemTest
 			}
 			
 			@Override
+			public void onStreamStep(Voice voice)
+			{
+				System.out.println("Stream step: " + voice);
+			}
+
+			@Override
 			public void onStreamThreadEnded()
 			{
 				System.out.println("Stream thread ended.");
 			}
 			
+			@Override
+			public void onSoundCached(SoundData data)
+			{
+				System.out.println("Sound cached: " + data.getPath());
+			}
+
 			@Override
 			public void onSoundUnsupportedError(SoundData data, UnsupportedAudioFileException e)
 			{
@@ -83,18 +96,16 @@ public final class SystemTest
 			{
 				e.printStackTrace(System.err);
 			}
-			
-			@Override
-			public void onSoundCached(SoundData data)
-			{
-				System.out.println("Sound cached: " + data.getPath());
-			}
 
 		});
 		
 		SoundGroup group = SoundSystem.group(false, true, false, 0);
-		SoundData data = SoundSystem.fileData(new File(args[0]), false, 0);
-		group.setEffectGain(0.5f);
+		group.setEffectGain(0.0f);
+		SoundData data = SoundSystem.fileData(new File(args[0]), true, 0);
+		system.setSoundScape(SoundSystem.soundScape(null, SoundReverbType.FACTORY_LARGEROOM, null));
 		system.play(data, group);
+		
+		ThreadUtils.sleep(1000);
+		system.shutDown();
 	}
 }
