@@ -1,4 +1,4 @@
-package com.blackrook.gloop.openal.system;
+package com.blackrook.gloop.openal.util.system;
 
 /**
  * A soundscape type that affects playing sounds in groups that use it.

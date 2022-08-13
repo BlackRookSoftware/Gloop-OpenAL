@@ -6,11 +6,11 @@ import java.io.IOException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import com.blackrook.gloop.openal.struct.ThreadUtils;
-import com.blackrook.gloop.openal.system.SoundData;
-import com.blackrook.gloop.openal.system.SoundReverbType;
-import com.blackrook.gloop.openal.system.SoundSystem;
-import com.blackrook.gloop.openal.system.SoundSystem.SoundGroup;
-import com.blackrook.gloop.openal.system.SoundSystem.Voice;
+import com.blackrook.gloop.openal.util.system.SoundData;
+import com.blackrook.gloop.openal.util.system.SoundReverbType;
+import com.blackrook.gloop.openal.util.system.SoundSystem;
+import com.blackrook.gloop.openal.util.system.SoundSystem.SoundGroup;
+import com.blackrook.gloop.openal.util.system.SoundSystem.Voice;
 
 public final class SystemTest
 {

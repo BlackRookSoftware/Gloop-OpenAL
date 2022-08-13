@@ -1,4 +1,4 @@
-package com.blackrook.gloop.openal.system;
+package com.blackrook.gloop.openal.util.system;
 
 /**
  * A single rolloff type.

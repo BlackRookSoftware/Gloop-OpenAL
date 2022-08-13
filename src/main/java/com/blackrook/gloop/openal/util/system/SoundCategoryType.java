@@ -1,4 +1,4 @@
-package com.blackrook.gloop.openal.system;
+package com.blackrook.gloop.openal.util.system;
 
 /**
  * An encapsulation of sound rolloff properties for played sounds.

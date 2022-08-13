@@ -1,4 +1,4 @@
-package com.blackrook.gloop.openal.system;
+package com.blackrook.gloop.openal.util.system;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,6 +40,7 @@ import com.blackrook.gloop.openal.struct.ThreadUtils;
  * The main sound system.
  * This is a high-level implementation of OpenAL which performs a lot of
  * out-of-the-box conveniences for sound playback.
+ * <p> If this class is used, do NOT use the OALSystem class for sound playback. 
  * @author Matthew Tropiano
  */
 public class SoundSystem
