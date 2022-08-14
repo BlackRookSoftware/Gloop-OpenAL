@@ -7,6 +7,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import com.blackrook.gloop.openal.struct.ThreadUtils;
 import com.blackrook.gloop.openal.util.system.SoundData;
+import com.blackrook.gloop.openal.util.system.SoundEchoType;
 import com.blackrook.gloop.openal.util.system.SoundReverbType;
 import com.blackrook.gloop.openal.util.system.SoundSystem;
 import com.blackrook.gloop.openal.util.system.SoundSystem.SoundGroup;
@@ -101,11 +102,11 @@ public final class SystemTest
 		
 		SoundGroup group = SoundSystem.group(false, true, false, 0);
 		group.setEffectGain(0.0f);
-		SoundData data = SoundSystem.fileData(new File(args[0]), true, 0);
-		system.setSoundScape(SoundSystem.soundScape(null, SoundReverbType.FACTORY_LARGEROOM, null));
+		SoundData data = SoundSystem.fileData(new File(args[0]), false, 0);
+		system.setSoundScape(SoundSystem.soundScape(null, null, null, 0.0f, 0.0f));
 		system.play(data, group);
 		
-		ThreadUtils.sleep(1000);
+		do { ThreadUtils.sleep(1000); } while (system.getUsedVoiceCount() > 0); 
 		system.shutDown();
 	}
 }

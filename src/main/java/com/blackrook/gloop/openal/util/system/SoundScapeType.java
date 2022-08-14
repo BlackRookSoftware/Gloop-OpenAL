@@ -22,4 +22,20 @@ public interface SoundScapeType
 	 */
 	SoundOcclusionType getOcclusion();
 
+	/**
+	 * The minimum effect gain at distance 0. At the max effect distance, it becomes 1.0f,
+	 * so this is the multiplicative amount applied at the closest distance. Rolloff is linear. 
+	 * @return the effect gain at the closest distance.
+	 * @see #getMaxEffectGainDistance()
+	 */
+	float getMinEffectGain();
+
+	/**
+	 * The distance at which the maximum amount of effect gain is applied (1.0f).
+	 * Soundscapes can manipulate the amount that effects are applied by distance.
+	 * @return the distance at which full reverb is applied, in world units.
+	 * @see #getMinEffectGain()
+	 */
+	float getMaxEffectGainDistance();
+
 }

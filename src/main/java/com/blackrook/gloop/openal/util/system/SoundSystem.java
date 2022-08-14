@@ -356,11 +356,13 @@ public class SoundSystem
 	 * @param echoType the echo type.
 	 * @param reverbType the reverb type.
 	 * @param occlusionType the occlusion type.
+	 * @param minEffectGain the minimum effect gain at distance 0 (gain is 1.0 at max distance).
+	 * @param maxEffectDistance the distance in world units at which the effect gain is 1.0.
 	 * @return a new soundscape.
 	 */
-	public static SoundScape soundScape(SoundEchoType echoType, SoundReverbType reverbType, SoundOcclusionType occlusionType)
+	public static SoundScape soundScape(SoundEchoType echoType, SoundReverbType reverbType, SoundOcclusionType occlusionType, float minEffectGain, float maxEffectDistance)
 	{
-		return new SoundScape(echoType, reverbType, occlusionType);
+		return new SoundScape(echoType, reverbType, occlusionType, minEffectGain, maxEffectDistance);
 	}
 	
 	/**
@@ -801,6 +803,22 @@ public class SoundSystem
 	public long getUpdateEventNanos()
 	{
 		return updateEventNanos;
+	}
+	
+	/**
+	 * @return the amount of available voices. 
+	 */
+	public int getAvailableVoiceCount()
+	{
+		return availableVoices.size();
+	}
+	
+	/**
+	 * @return the amount of used voices. 
+	 */
+	public int getUsedVoiceCount()
+	{
+		return usedVoices.size();
 	}
 	
 	/**
@@ -1482,7 +1500,7 @@ public class SoundSystem
 		float soundScapeEffectEchoGain;
 		float soundScapeEffectReverbGain;
 		
-		float distanceEffectGain = 1f; // TODO: Affect effect gain with distance somewhat.
+		float distanceEffectGain; 
 	
 		if (rolloff != null)
 		{
@@ -1525,6 +1543,13 @@ public class SoundSystem
 				soundScapeEffectReverbGain = 0.0f;
 
 			soundScapeEffectGain = 1.0f;
+			
+			if (update.distance > soundScape.getMaxEffectGainDistance())
+				distanceEffectGain = 1.0f;
+			else if (soundScape.getMaxEffectGainDistance() == 0f)
+				distanceEffectGain = 1.0f;
+			else
+				distanceEffectGain = ((update.distance / soundScape.getMaxEffectGainDistance()) * (1.0f - soundScape.getMinEffectGain())) + soundScape.getMinEffectGain();
 		}
 		else
 		{
@@ -1534,6 +1559,7 @@ public class SoundSystem
 			soundScapeEffectGain = 0.0f;
 			soundScapeEffectEchoGain = 0.0f;
 			soundScapeEffectReverbGain = 0.0f;
+			distanceEffectGain = 1.0f; 
 		}
 		
 		float dopplerPitch = 1.0f;
@@ -1666,13 +1692,17 @@ public class SoundSystem
 		private SoundEchoType echoType;
 		private SoundReverbType reverbType;
 		private SoundOcclusionType occlusionType;
+		private float minEffectGain;
+		private float maxEffectDistance;
 
-		private SoundScape(SoundEchoType echoType, SoundReverbType reverbType, SoundOcclusionType occlusionType)
+		private SoundScape(SoundEchoType echoType, SoundReverbType reverbType, SoundOcclusionType occlusionType, float minEffectGain, float maxEffectDistance)
 		{
 			super();
 			this.echoType = echoType;
 			this.reverbType = reverbType;
 			this.occlusionType = occlusionType;
+			this.minEffectGain = 1f;
+			this.maxEffectDistance = 0f;
 		}
 
 		@Override
@@ -1691,6 +1721,18 @@ public class SoundSystem
 		public SoundOcclusionType getOcclusion()
 		{
 			return occlusionType;
+		}
+
+		@Override
+		public float getMaxEffectGainDistance()
+		{
+			return maxEffectDistance;
+		}
+
+		@Override
+		public float getMinEffectGain()
+		{
+			return minEffectGain;
 		}
 	}
 	
