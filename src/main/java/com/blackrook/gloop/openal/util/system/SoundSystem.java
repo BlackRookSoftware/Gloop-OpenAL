@@ -1413,36 +1413,57 @@ public class SoundSystem
 			}
 			else
 			{
-				float sourceX = location.getSoundPositionX();
-				float sourceY = location.getSoundPositionY();
-				float sourceZ = location.getSoundPositionZ();
-				float cameraX = observer.getSoundPositionX();
-				float cameraY = observer.getSoundPositionY();
-				float cameraZ = observer.getSoundPositionZ();
-			
-				positionX = sourceX - cameraX;
-				positionY = sourceY - cameraY;
-				positionZ = sourceZ - cameraZ;
+				if (voice.group.isZeroPosition())
+				{
+					positionX = 0f;
+					positionY = 0f;
+					positionZ = 0f;
+				}
+				else
+				{
+					float sourceX = location.getSoundPositionX();
+					float sourceY = location.getSoundPositionY();
+					float sourceZ = location.getSoundPositionZ();
+					float cameraX = observer.getSoundPositionX();
+					float cameraY = observer.getSoundPositionY();
+					float cameraZ = observer.getSoundPositionZ();
+				
+					positionX = sourceX - cameraX;
+					positionY = sourceY - cameraY;
+					positionZ = sourceZ - cameraZ;
+				}
 	
 				double sourceToCamera = MathUtils.getVectorAngleDegrees(-positionX, -positionY);
 				double cameraToSource = MathUtils.getVectorAngleDegrees(positionX, positionY);
 				update.distance = (float)MathUtils.getVectorLength(positionX, positionY, positionZ); 
 				update.observerAngle = (float)MathUtils.getRelativeAngleDegrees(observer.getSoundAngle(), cameraToSource);
 				update.coneAngle = (float)Math.abs(MathUtils.getRelativeAngleDegrees(location.getSoundAngle(), sourceToCamera));
-				update.occlusion = occlusionFunction != null ? occlusionFunction.getOcclusionScalar(
-					location.getSoundPositionX(),
-					location.getSoundPositionY(),
-					location.getSoundPositionZ(),
-					observer.getSoundPositionX(),
-					observer.getSoundPositionY(),
-					observer.getSoundPositionZ()
-				) : 0.0f; 
+				
+				if (voice.group.isOccludable())
+				{
+					update.occlusion = occlusionFunction != null ? occlusionFunction.getOcclusionScalar(
+						location.getSoundPositionX(),
+						location.getSoundPositionY(),
+						location.getSoundPositionZ(),
+						observer.getSoundPositionX(),
+						observer.getSoundPositionY(),
+						observer.getSoundPositionZ()
+					) : 0.0f; 
+				}
+				else
+				{
+					update.occlusion = 0.0f;
+				}
 			}
 		}
 		// not positional, position is strict panning
 		else if (voice.group.isTwoDimensional()) 
 		{
-			positionX = voice.location != null ? voice.location.getSoundPositionX() : 0.0f;
+			if (voice.group.isZeroPosition())
+				positionX = 0.0f;
+			else
+				positionX = voice.location != null ? voice.location.getSoundPositionX() : 0.0f;
+			
 			positionY = 0.0f;
 			positionZ = 1.0f;
 			
