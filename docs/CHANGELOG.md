@@ -1,5 +1,5 @@
-Gloop-OpenAL (C) Black Rook Software 2020 
-=========================================
+Gloop-OpenAL (C) Black Rook Software
+====================================
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 

@@ -1,7 +1,7 @@
 # Black Rook Gloop-OpenAL
 Or... (LightWeight Java) **G**ame **L**ibrary **O**bject-**O**riented **P**aradigm for **OpenAL**
 
-Copyright (c) 2020 Black Rook Software.  
+Copyright (c) 2020-2026 Black Rook Software.  
 [https://github.com/BlackRookSoftware/Gloop-OpenAL](https://github.com/BlackRookSoftware/Gloop-OpenAL)
 
 [Latest Release](https://github.com/BlackRookSoftware/Gloop-OpenAL/releases/latest)
