@@ -2,20 +2,20 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="200mm"
    height="200mm"
    viewBox="0 0 200 200"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.1 r15371"
-   sodipodi:docname="Black Rook Software Logo Base.svg">
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.7"
-     inkscape:cx="426.9942"
-     inkscape:cy="383.31479"
+     inkscape:zoom="2.8"
+     inkscape:cx="336.60714"
+     inkscape:cy="390.17857"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -37,18 +37,19 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:window-width="1390"
-     inkscape:window-height="799"
-     inkscape:window-x="313"
-     inkscape:window-y="150"
+     inkscape:window-width="1284"
+     inkscape:window-height="957"
+     inkscape:window-x="534"
+     inkscape:window-y="54"
      inkscape:window-maximized="0"
-     inkscape:snap-bbox="true">
+     inkscape:snap-bbox="true"
+     inkscape:pagecheckerboard="1">
     <inkscape:grid
        type="xygrid"
        id="grid4485"
        units="mm"
-       spacingx="1.25"
-       spacingy="1.25"
+       spacingx="0.5"
+       spacingy="0.5"
        originx="-2.3499721e-016"
        originy="6.0159285e-014" />
   </sodipodi:namedview>
@@ -60,7 +61,6 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -95,7 +95,7 @@
        d="M 98.519262,107.00088 A 90,90 0 0 1 188.91564,196.57 90,90 0 0 1 99.379268,286.99881 90,90 0 0 1 8.9180341,197.49519 90,90 0 0 1 98.38889,107.00155" />
     <g
        id="g5777"
-       transform="translate(-1.0833287)">
+       transform="translate(-1.0833282)">
       <path
          sodipodi:nodetypes="ccccccccccccc"
          inkscape:connector-curvature="0"
@@ -124,5 +124,35 @@
          d="m 148.91667,165.75 c 6.1678,0.12346 6.25,18.75 6.25,18.75 -0.0822,12.91127 12.5,12.5 12.5,12.5 -12.5,0 -12.5,18.75 -12.5,18.75 0,12.5 -6.25,12.5 -6.25,12.5"
          style="fill:none;fill-rule:evenodd;stroke:#c0c0c0;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
+    <ellipse
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
+       id="path706"
+       cx="98.916672"
+       cy="200.70404"
+       rx="25"
+       ry="24.999916" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 98.916672,187.67502 v 12.5"
+       id="path3917"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 91.416672,197.67502 c 0,10 7.5,10 7.5,10 v 0 0"
+       id="path4051"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 106.41667,197.67502 c 0,10 -7.499998,10 -7.499998,10 v 0 0"
+       id="path4051-1"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 98.916672,207.67502 c 0,10 0,10 0,10"
+       id="path6161" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 93.916671,217.67502 c 9.999999,0 9.999999,0 9.999999,0"
+       id="path6691" />
   </g>
 </svg>
