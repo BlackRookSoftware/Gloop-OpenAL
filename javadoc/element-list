@@ -3,3 +3,5 @@ com.blackrook.gloop.openal.effect
 com.blackrook.gloop.openal.exception
 com.blackrook.gloop.openal.filter
 com.blackrook.gloop.openal.struct
+com.blackrook.gloop.openal.util
+com.blackrook.gloop.openal.util.system
