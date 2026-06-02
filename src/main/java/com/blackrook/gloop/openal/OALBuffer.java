@@ -19,7 +19,6 @@ import org.lwjgl.system.MemoryUtil;
 import com.blackrook.gloop.openal.JSPISoundHandle.Decoder;
 import com.blackrook.gloop.openal.OALSystem.ContextLock;
 import com.blackrook.gloop.openal.exception.SoundException;
-import com.blackrook.gloop.openal.struct.IOUtils;
 
 /**
  * Sound sample buffer class.
@@ -87,9 +86,10 @@ public final class OALBuffer extends OALObject
 	OALBuffer(OALContext context, JSPISoundHandle handle) throws IOException
 	{
 		this(context);
-		Decoder decoder = handle.getDecoder();
-		loadFromDecoder(decoder);
-		IOUtils.close(decoder);
+		try (Decoder decoder = handle.getDecoder())
+		{
+			loadFromDecoder(decoder);
+		}
 	}
 	
 	/**

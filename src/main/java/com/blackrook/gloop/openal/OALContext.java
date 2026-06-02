@@ -505,7 +505,7 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Allocates a new buffer with data loaded into it. All of the sound data
-	 * readable by the SoundData instance is read into the buffer.
+	 * readable by the JSPISoundHandle.Decoder instance is read into the buffer.
 	 * If you know that the data being loaded is very long or large, you
 	 * should consider using a Streaming Source to conserve memory.
 	 * Buffers are independant of device context. 
@@ -521,7 +521,7 @@ public class OALContext extends OALHandle
 
 	/**
 	 * Allocates a new buffer with data loaded into it. All of the sound data
-	 * readable by the SoundDataDecoder instance is read into the buffer.
+	 * readable by the JSPISoundHandle.Decoder instance is read into the buffer.
 	 * If you know that the data being loaded is very long or large, you
 	 * should consider using a Streaming Source to conserve memory.
 	 * Buffers are independent of device context. 
